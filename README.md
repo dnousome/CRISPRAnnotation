@@ -7,3 +7,4 @@ CRISPResso2 Annotation
 Required Arguments -a/--annovarin in AVINPUT format  
 
 3_ANNOVAR_Parse.R Parses the ANNOVAR Output files (multianno.txt)
+
