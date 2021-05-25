@@ -36,13 +36,17 @@ align_crispresso=function(x){
     vt_snp=tibble(chr=gene_coords$chr,Start=gene_coords$start+mmt$SubjectStart-1,
                   End=gene_coords$start+mmt$SubjectEnd-1,
                   REF=mmt$SubjectSubstring,ALT=mmt$PatternSubstring,
-                  Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence)
+                  Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence,
+                  n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
+                  Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
     
     vt_ins=tibble(chr=gene_coords$chr,
                   Start=(gene_coords$start+d@subject@range@start+ins$start)-3,
                   End=gene_coords$start+ins$start+d@subject@range@start+ins$width-3,
                   REF=ins_ref,ALT=ins_alt,
-                  Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence)
+                  Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence,
+                  n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
+                  Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
     
     print(nrow(vt_snp)==x$n_mutated)
     bind_rows(vt_snp,vt_ins)
@@ -50,7 +54,9 @@ align_crispresso=function(x){
     vt_snp=tibble(chr=gene_coords$chr,Start=gene_coords$start+mmt$SubjectStart-1,
                   End=gene_coords$start+mmt$SubjectEnd-1,
                   REF=mmt$SubjectSubstring,ALT=mmt$PatternSubstring,
-                  Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence)
+                  Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence,
+                  n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
+                  Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
     
     print(nrow(vt_snp)==x$n_mutated)
     vt_snp

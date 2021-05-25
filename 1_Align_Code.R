@@ -55,7 +55,7 @@ gene_sequence = gene_sequence_info$sequence[gene_sequence_info$gene==mygenes[1]]
 ##Read in the data
 ##Source the functions
 source("0_Functions.R")
-out=lapply(myfiles,allele_freq_tab)
+out=lapply(myfiles[1],allele_freq_tab)
 
 ##For annovar Keep on the REF/ALT
 vt=lapply(out,function(x){
@@ -67,7 +67,7 @@ vt_annovar=lapply(out,function(x){
     dplyr::select(chr,Start,End,REF,ALT)
 })
 
-##Load this VT_SNP object into ANNOVAR And see?
+##Load this VT_SNP object into ANNOVAR?
 lapply(names(vt_annovar),function(x){
   write_tsv(vt[[x]],paste0(x,"_toanno.avinput"),col_names = F)
 })
