@@ -5,16 +5,15 @@ Download all files 0_Functions.R AnnotatedCRISPResso.R, RunAnnotate.sh, runannov
   
  
 ### `RunAnnotate.sh`
-This will Run the pipeline
+This will run the pipeline
 ```
 usage: RunAnnotate.sh [-h] 
 
-Run muh pipelinezz
 
 optional arguments:
   --help                show this help message and exit
-  --p PATH              [input_params] Path to directory containing all Alleles_Frequency_Table.zip
-  --g Gene              [input_params] Gene of Intereset to 
+  --p PATH              [input_params] Path to directory containing all Alleles_Frequency_Table.zip files
+  --g Gene              [input_params] Gene of Interest to grab coordinates (works only with 1 at a time)
 ```
 Example
 ```
