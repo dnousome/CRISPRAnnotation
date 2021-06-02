@@ -10,7 +10,7 @@ This will run the pipeline
 usage: RunAnnotate.sh [-h] 
 
 
-optional arguments:
+arguments:
   --help                show this help message and exit
   --p PATH              [input_params] Path to directory containing all Alleles_Frequency_Table.zip files
   --g Gene              [input_params] Gene of Interest to grab coordinates (works only with 1 at a time)
