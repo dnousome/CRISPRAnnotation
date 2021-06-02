@@ -1,0 +1,125 @@
+---
+output:   
+   flexdashboard::flex_dashboard:
+   orientation: columns
+   source_code: embed
+params:
+  vt_file:
+    value: x
+  af_file:
+    value: x
+  title:
+    value: x 
+  id_file:
+    value: x 
+title: "`r params$title`"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(crosstalk)
+library(DT)
+
+```
+
+
+
+Variant Allele Frequency (CRISPResso)
+=======================================================================
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+
+vt_full=readRDS(params$vt_file) 
+vt_full[[params$id_file]]=vt_full[[params$id_file]] %>%
+  group_by(af.id) %>%
+  mutate(TotalPAMSites = case_when((sum(Start == 32363392,Start == 32363494)==2)~2,
+                                   (sum(Start == 32363392,Start == 32363494)==1)~1,TRUE ~ 0)) %>%
+  mutate(PAMsite = case_when(
+    TotalPAMSites==2 ~ '32363392|32363494',
+    TotalPAMSites==1 & any(Start %in% 32363392) ~"32363392",
+    TotalPAMSites==1 & any(Start %in% 32363494)~"32363494"
+  ))
+    
+afch=readRDS(params$af_file)
+
+newdt=left_join(afch[[params$id_file]],vt_full[[params$id_file]],by="af.id")
+
+shared_dt1=SharedData$new(afch[[params$id_file]],~af.id,group="Variant")
+shared_dt2=SharedData$new(vt_full[[params$id_file]],~af.id,group="Variant")
+shared_dt3=SharedData$new(newdt,~af.id,group="Variant")
+
+
+####Create the boxes
+bscols(
+    list(filter_slider("n_mutated", "Number of Mutations", shared_dt1, ~n_mutated),
+         filter_slider("n_deletions", "Number of Deletions", shared_dt1, ~n_deleted),
+         filter_slider("n_inserted", "Number of Insertions", shared_dt1, ~n_inserted),
+         filter_checkbox('TotalPAMSites',"Number of PAM site mutations Identified",shared_dt2,~TotalPAMSites),
+         filter_checkbox('PAMsite',"PAM site mutations",shared_dt2,~PAMsite)
+
+           )
+    
+)
+```
+
+Column
+-----------------------------------------------------------------------
+
+```{r}
+
+DT::datatable(shared_dt3,rownames=F,fillContainer = F,
+              extensions="Buttons",
+              options=list( dom = 'Bfrtip')) %>%
+  formatRound('Reads_prop', 5) 
+
+```
+
+
+Separated by Allele Frequency Output
+=======================================================================
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+
+####Create the boxes
+bscols(
+    list(filter_slider("n_mutated", "Number of Mutations", shared_dt1, ~n_mutated),
+         filter_slider("n_deletions", "Number of Deletions", shared_dt1, ~n_deleted),
+         filter_slider("n_inserted", "Number of Insertions", shared_dt1, ~n_inserted),
+         filter_checkbox('TotalPAMSites',"Number of PAM site mutations Identified",shared_dt2,~TotalPAMSites),
+         filter_checkbox('PAMsite',"PAM site mutations",shared_dt2,~PAMsite)
+
+           )
+    
+)
+```
+
+
+Column
+-----------------------------------------------------------------------
+### CRISPResso2 Allele Frequency Output 
+
+```{r}
+
+DT::datatable(shared_dt1,rownames=F,
+              extensions="Buttons",
+              options=list( dom = 'Bfrtip')) %>%
+  formatRound('Reads_prop', 5) 
+
+```
+
+### Annotated Variant Table
+
+```{r}
+DT::datatable(shared_dt2,rownames=F,
+              extensions="Buttons",
+              options=list( dom = 'Bfrtip'))
+```
+
+
+
