@@ -1,10 +1,24 @@
 # CCBR1046 Project 
 CRISPResso2 Annotation
 
-1_Align_Code.R Parses through the CRSIPResso output to run a local alignment and prepares a file in AVINPUT format for ANNOVAR.  
+Download all files 0_Functions.R AnnotatedCRISPResso.R, RunAnnotate.sh, runannovar.sh, and Annotation_render.Rmd  
+  
+ 
+### `RunAnnotate.sh`
+This will Run the pipeline
+```
+usage: RunAnnotate.sh [-h] 
 
-2_runanno.sh Uses the Output from the previous step to call ANNOVAR with specified annotations (CLINVAR, SIFT, POLYPHEN, etc)  
-Required Arguments -a/--annovarin in AVINPUT format  
+Run muh pipelinezz
 
-3_ANNOVAR_Parse.R Parses the ANNOVAR Output files (multianno.txt)
+optional arguments:
+  --help                show this help message and exit
+  --p PATH              [input_params] Path to directory containing all Alleles_Frequency_Table.zip
+  --g Gene              [input_params] Gene of Intereset to 
+```
+Example
+```
+chmod +x RunAnnotate.sh
+./RunAnnotate.sh -p /scratch/nousome/ccbr1046/Annotate_B1B2repeat/ -g BRCA2
 
+```
