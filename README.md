@@ -9,7 +9,6 @@ This will run the pipeline
 ```
 usage: RunAnnotate.sh [-h] 
 
-
 arguments:
   --help                show this help message and exit
   --p PATH              [input_params] Path to directory containing all Alleles_Frequency_Table.zip files
