@@ -3,7 +3,6 @@ align_crispresso=function(x){
 
   ##Check the alignment
   #seq <- c(alignedPattern(d), alignedSubject(d))
-  #as.character(seq)
   #s1=DECIPHER::ConsensusSequence(seq)
   #DECIPHER::BrowseSeqs(seq)
   
@@ -48,7 +47,7 @@ align_crispresso=function(x){
                   n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
                   Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
     
-    print(nrow(vt_snp)==x$n_mutated)
+    #print(nrow(vt_snp)==x$n_mutated)
     bind_rows(vt_snp,vt_ins)
   }else{
     vt_snp=tibble(chr=gene_coords$chr,Start=gene_coords$start+mmt$SubjectStart-1,
@@ -81,5 +80,4 @@ this <- mytable %>%
 
 that=split(this,1:nrow(this))
 lapply(that,align_crispresso)
-#bind_rows(vt)
 }
