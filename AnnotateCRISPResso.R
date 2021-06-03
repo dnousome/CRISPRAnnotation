@@ -162,7 +162,7 @@ saveRDS(afch,sprintf("afch_%s.rds",opt$out))
 saveRDS(vt_full,sprintf("vt_full_%s.rds",opt$out))
 
 
-
+stack_size = getOption("pandoc.stack.size", default = "512m")
 d=readRDS(sprintf("afch_%s.rds",opt$out))
 #names(d)
 lapply(1:length(d),function(i){

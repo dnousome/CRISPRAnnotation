@@ -16,7 +16,7 @@ title: "`r params$title`"
 ---
 
 ```{r setup, include=FALSE}
-library(tidyverse)
+library(dplyr)
 library(crosstalk)
 library(DT)
 
@@ -76,50 +76,4 @@ DT::datatable(shared_dt3,rownames=F,fillContainer = F,
   formatRound('Reads_prop', 5) 
 
 ```
-
-
-Separated by Allele Frequency Output
-=======================================================================
-
-Inputs {.sidebar}
------------------------------------------------------------------------
-
-```{r}
-
-####Create the boxes
-bscols(
-    list(filter_slider("n_mutated", "Number of Mutations", shared_dt1, ~n_mutated),
-         filter_slider("n_deletions", "Number of Deletions", shared_dt1, ~n_deleted),
-         filter_slider("n_inserted", "Number of Insertions", shared_dt1, ~n_inserted),
-         filter_checkbox('TotalPAMSites',"Number of PAM site mutations Identified",shared_dt2,~TotalPAMSites),
-         filter_checkbox('PAMsite',"PAM site mutations",shared_dt2,~PAMsite)
-
-           )
-    
-)
-```
-
-
-Column
------------------------------------------------------------------------
-### CRISPResso2 Allele Frequency Output 
-
-```{r}
-
-DT::datatable(shared_dt1,rownames=F,
-              extensions="Buttons",
-              options=list( dom = 'Bfrtip')) %>%
-  formatRound('Reads_prop', 5) 
-
-```
-
-### Annotated Variant Table
-
-```{r}
-DT::datatable(shared_dt2,rownames=F,
-              extensions="Buttons",
-              options=list( dom = 'Bfrtip'))
-```
-
-
 
