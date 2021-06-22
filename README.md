@@ -1,13 +1,13 @@
 # CCBR1046 Project 
 CRISPResso2 Annotation
 
-Download all files 0_Functions.R AnnotatedCRISPResso.R, RunAnnotate.sh, runannovar.sh, and Annotation_render.Rmd  
+Download all files 0_Functions.R 1_AnnotateCRISPResso.R, 2_runannovar.sh, and 3_Annotation_render.Rmd and the script to run it all CRISPR_Annotate.sh
   
  
-### `RunAnnotate.sh`
+### `CRISPR_Annotate.sh`
 This will run the pipeline
 ```
-usage: RunAnnotate.sh [-h] 
+usage: CRISPR_Annotate.sh [-h] 
 
 arguments:
   --help                show this help message and exit
