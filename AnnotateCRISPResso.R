@@ -40,7 +40,7 @@ names(myfiles) = gsub("^CRISPResso_on_","",basename(dirname(myfiles)))
 
 
 ##Load the Gene Name
-mygenes = opt$gene
+
 mart = useMart('ensembl', dataset="hsapiens_gene_ensembl")
 #mart = useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl",host = "asia.ensembl.org")
 
@@ -50,7 +50,7 @@ my_attrs = c(gene="external_gene_name",chr="chromosome_name",start="start_positi
 
 gene_sequence_info = getBM(attributes = my_attrs,
                            filters = "external_gene_name", 
-                           values = mygenes, mart = mart, verbose=F)
+                           values = opt$gene, mart = mart, verbose=F)
 
 
 gene_sequence_info = gene_sequence_info[,match(my_attrs, colnames(gene_sequence_info))]
@@ -84,9 +84,9 @@ vt_annovar=lapply(out,function(x){
    
 })
 
-##Load this VT_SNP object into ANNOVAR?
+##Load this VT_annovar object into ANNOVAR
 lapply(names(vt_annovar),function(x){
-  write_tsv(vt[[x]],paste0(x,"_toanno.avinput"),col_names = F)
+  write_tsv(vt_annovar[[x]],paste0(x,"_toanno.avinput"),col_names = F)
 })
 
 
@@ -124,7 +124,7 @@ anno_out=mapply(function(x,y){
 
 
 
-##Prep for Shinytable
+##Prep for Table output
 afch=lapply(out,function(x){
   s=lapply(x,function(y)y[1,])
   bind_rows(s) %>% dplyr::select(Aligned,Reference,n_deleted,n_inserted,n_mutated,Reads_n,Reads_prop) %>%
@@ -162,12 +162,14 @@ saveRDS(afch,sprintf("afch_%s.rds",opt$out))
 saveRDS(vt_full,sprintf("vt_full_%s.rds",opt$out))
 
 
+
 stack_size = getOption("pandoc.stack.size", default = "512m")
 d=readRDS(sprintf("afch_%s.rds",opt$out))
 #names(d)
 lapply(1:length(d),function(i){
   rmarkdown::render(
-    input  = 'Annotation_render.Rmd',output_file = names(d)[i],
+    input  = 'Annotation_render.Rmd',
+    output_file = names(d)[i],
     params = list(
       af_file = sprintf("afch_%s.rds",opt$out),
       vt_file   = sprintf("vt_full_%s.rds",opt$out),

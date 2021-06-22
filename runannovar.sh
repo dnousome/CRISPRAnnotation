@@ -27,5 +27,5 @@ fi
 
 
 module load annovar/2019-10-24
-runcmd="table_annovar.pl $AVIN $ANNOVAR_DATA/hg38 -buildver hg38 -protocol gene,dbnsfp35a,dbnsfp41a,clinvar_20200419,cosmic92_coding,cosmic92_noncoding -operation g,f,f,f,f,f"
+runcmd="table_annovar.pl $AVIN $ANNOVAR_DATA/hg38 -buildver hg38 -protocol gene,dbnsfp35a,dbnsfp41a,clinvar_20200419,cosmic92_coding,cosmic92_noncoding -operation g,f,f,f,f,f --thread $SLURM_JOB_CPUS_PER_NODE"
 eval $runcmd

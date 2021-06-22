@@ -31,9 +31,40 @@ Inputs {.sidebar}
 -----------------------------------------------------------------------
 
 ```{r}
-
 vt_full=readRDS(params$vt_file) 
-vt_full[[params$id_file]]=vt_full[[params$id_file]] %>%
+afch=readRDS(params$af_file)
+
+#vt_full[[params$id_file]]=vt_full[[params$id_file]] %>%
+#  mutate(WithinRange=case_when(
+#    (Start < 32363397|Start > 32363533)~"OutsideRange",
+#    (End < 32363397|End > 32363533)~"OutsideRange",
+#    TRUE~ "WithinRange")
+#  )  %>%
+#  group_by(af.id) %>%
+#  mutate(TotalPAMSites = case_when((sum(Start == 32363392,Start == 32363494)==2)~2,
+#                                   (sum(Start == 32363392,Start == 32363494)==1)~1,TRUE ~ 0)) %>%
+#  mutate(PAMsite = case_when(
+#    TotalPAMSites==2 ~ '32363392|32363494',
+#    TotalPAMSites==1 & any(Start %in% 32363392) ~"32363392",
+#    TotalPAMSites==1 & any(Start %in% 32363494)~"32363494"
+#  )) %>%
+#  ungroup() %>%
+#  dplyr::select(-TotalPAMSites)
+
+
+
+
+newdt=left_join(afch[[params$id_file]],vt_full[[params$id_file]],by="af.id") %>%
+  mutate(Biallelic=case_when(
+    nchar(ALT)==1 & ALT!="-" ~ "Biallelic",
+    TRUE~"Indel/Multiallelic"))  %>%
+  mutate(WithinRange=case_when(
+    (Start < 32363397|Start > 32363533)~"OutsideRange",
+    (End < 32363397|End > 32363533)~"OutsideRange",
+    TRUE~ "WithinRange"))  %>%
+  mutate(AlignError=case_when(
+    grepl("-",Aligned) & (n_deleted==0)~"CRISPRessoError",
+    TRUE~"NoError")) %>%
   group_by(af.id) %>%
   mutate(TotalPAMSites = case_when((sum(Start == 32363392,Start == 32363494)==2)~2,
                                    (sum(Start == 32363392,Start == 32363494)==1)~1,TRUE ~ 0)) %>%
@@ -41,28 +72,40 @@ vt_full[[params$id_file]]=vt_full[[params$id_file]] %>%
     TotalPAMSites==2 ~ '32363392|32363494',
     TotalPAMSites==1 & any(Start %in% 32363392) ~"32363392",
     TotalPAMSites==1 & any(Start %in% 32363494)~"32363494"
-  ))
-    
-afch=readRDS(params$af_file)
+  )) %>%
+  ungroup() %>%
+  dplyr::select(-TotalPAMSites) %>%
+  relocate(Aligned,.after=ALT) %>%
+  relocate(Reference,.after=Aligned) %>% distinct()
 
-newdt=left_join(afch[[params$id_file]],vt_full[[params$id_file]],by="af.id")
+newdt1=filter(newdt,PAMsite %in% c('32363392|32363494','32363392','32363494') &
+          AlignError=='NoError' &   WithinRange=="WithinRange" &  Biallelic=="Biallelic" &
+                 n_deleted==0 & n_inserted==0)
 
-shared_dt1=SharedData$new(afch[[params$id_file]],~af.id,group="Variant")
-shared_dt2=SharedData$new(vt_full[[params$id_file]],~af.id,group="Variant")
-shared_dt3=SharedData$new(newdt,~af.id,group="Variant")
+#shared_dt1=SharedData$new(afch[[params$id_file]],~af.id,group="id_subset")
+#shared_dt2=SharedData$new(vt_full[[params$id_file]],~af.id,group="id_subset")
+#shared_dt3=SharedData$new(newdt,~af.id,group="id_subset")
+shared_dt3=SharedData$new(newdt)
 
 
 ####Create the boxes
 bscols(
-    list(filter_slider("n_mutated", "Number of Mutations", shared_dt1, ~n_mutated),
-         filter_slider("n_deletions", "Number of Deletions", shared_dt1, ~n_deleted),
-         filter_slider("n_inserted", "Number of Insertions", shared_dt1, ~n_inserted),
-         filter_checkbox('TotalPAMSites',"Number of PAM site mutations Identified",shared_dt2,~TotalPAMSites),
-         filter_checkbox('PAMsite',"PAM site mutations",shared_dt2,~PAMsite)
+  list(filter_slider("n_mutated", "Number of Mutations", shared_dt3, ~n_mutated),
+       filter_slider("n_deletions", "Number of Deletions", shared_dt3, ~n_deleted),
+       filter_slider("n_inserted", "Number of Insertions", shared_dt3, ~n_inserted),
+       
+     #  filter_checkbox('TotalPAMSites',"Number of PAM site mutations Identified",shared_dt2,~TotalPAMSites),
+       filter_checkbox('PAMsite',"PAM site mutations",shared_dt3,~PAMsite),
+       filter_checkbox("WithinRange", "Within Expected Range", shared_dt3, ~WithinRange),
+       filter_checkbox("Biallelic", "Biallelic", shared_dt3, ~Biallelic),
+       filter_checkbox("AlignError", "Alignment Error", shared_dt3, ~AlignError)#,
+  #   filter_checkbox("AFID_Dup", "AFID Duplicated", shared_dt3, ~AFID_Dup)
 
-           )
-    
+       
+  )
+  
 )
+
 ```
 
 Column
@@ -72,8 +115,24 @@ Column
 
 DT::datatable(shared_dt3,rownames=F,fillContainer = F,
               extensions="Buttons",
-              options=list( dom = 'Bfrtip')) %>%
-  formatRound('Reads_prop', 5) 
+              options=list( dom = 'Bfrtip',
+              columnDefs = list(list(width = '200px', targets = "_all")))) %>%
+  formatRound('Reads_prop', 4) 
 
 ```
 
+
+
+Final Table
+=======================================================================
+
+Column
+-----------------------------------------------------------------------
+
+```{r}
+DT::datatable(newdt1,rownames=F,fillContainer = F,
+              extensions="Buttons",
+              options=list( dom = 'Bfrtip',
+              columnDefs = list(list(width = '200px', targets = "_all")))) %>%
+  formatRound('Reads_prop', 4) 
+```
