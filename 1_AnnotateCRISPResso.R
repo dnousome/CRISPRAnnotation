@@ -94,8 +94,8 @@ lapply(names(vt_annovar),function(x){
 ###Run ANNOVAR output
 ##Use 2_runanno.sh
 avin=paste0(names(myfiles),"_toanno.avinput")
-system("chmod 755 runannovar.sh")
-lapply(avin,function(x)system(sprintf("./runannovar.sh --annovarin %s",x)))
+system("chmod 755 2_runannovar.sh")
+lapply(avin,function(x)system(sprintf("./2_runannovar.sh --annovarin %s",x)))
 
 
 
@@ -104,30 +104,37 @@ annos=paste0(names(myfiles),"_toanno.avinput.hg38_multianno.txt")
 annos=annos[order(sapply(strsplit(annos,"[/_]"),'[',2))]
 
 #annos="~/Downloads/A1_S4_L001_R1_001_A1_S4_L001_R2_001_toanno.avinput.hg38_multianno.txt"
-anno_out=mapply(function(x,y){
-  anno_in=read_tsv(x,guess_max = 20000)  %>%
-    distinct() %>%
-    dplyr::select(Chr,Start,End,Ref,Alt,Func.refGene,Gene.refGene,AAChange.refGene,
-                  SIFT_score,Polyphen2_HDIV_score,
-                  Polyphen2_HVAR_score,CADD_raw,
-                  CLNSIG)
+#anno_out=mapply(function(x,y){
+#  anno_in=read_tsv(x,guess_max = 20000)  %>%
+#    distinct() %>%
+#    dplyr::select(Chr,Start,End,Ref,Alt,Func.refGene,Gene.refGene,AAChange.refGene,
+#                  gnomad=AF,gnomad_non_topmed=non_topmed_AF_popmax,
+#                  gnomad_female=AF_female,gnomad_noncancer=non_cancer_AF_popmax,
+#                  SIFT_score,Polyphen2_HDIV_score,
+##                  Polyphen2_HVAR_score,CADD_raw,
+#                  CLNSIG)
   
   
-  y %>% #mutate(chr=as.character(chr)) %>%
-    left_join(.,anno_in,by=c('chr'="Chr",'Start','End','REF'="Ref",'ALT'="Alt"))# %>%
+#  y %>% #mutate(chr=as.character(chr)) %>%
+#    left_join(.,anno_in,by=c('chr'="Chr",'Start','End','REF'="Ref",'ALT'="Alt"))# %>%
   #filter(Func.refGene=="exonic") %>% 
   #dplyr::select(-Func.refGene)
   
   
   
-},annos,vt,SIMPLIFY=F)
+#},annos,vt,SIMPLIFY=F)
 
 
+##ADD THE FLOSS
+#flossies=read_csv("~/Downloads/whi_ENSG00000139618_2021_06_21_15_13_26.csv")
+#dleft_join(anno_out[[1]],flossies,
+#          by=c("chr"="Chrom",'Start'='Position','REF'='Reference','ALT'='Alternate'))
 
 ##Prep for Table output
 afch=lapply(out,function(x){
   s=lapply(x,function(y)y[1,])
-  bind_rows(s) %>% dplyr::select(Aligned,Reference,n_deleted,n_inserted,n_mutated,Reads_n,Reads_prop) %>%
+  bind_rows(s) %>% 
+    dplyr::select(Aligned,Reference,n_deleted,n_inserted,n_mutated,Reads_n,Reads_prop) %>%
     mutate(af.id=1:nrow(.)) %>%
     dplyr::select(af.id,everything())
 })
@@ -136,11 +143,12 @@ afch=lapply(out,function(x){
 vt_full=mapply(function(x,y){
   anno_in=read_tsv(y,guess_max=20000)  %>%
     distinct() %>%
-    dplyr::select(Chr,Start,End,Ref,Alt,Func.refGene,Gene.refGene,AAChange.refGene,
-                  SIFT_score,Polyphen2_HDIV_score,
-                  Polyphen2_HVAR_score,CADD_raw,
-                  CLNSIG) 
-  
+        dplyr::select(Chr,Start,End,Ref,Alt,Func.refGene,Gene.refGene,AAChange.refGene,
+                      gnomad=AF,gnomad_non_topmed=non_topmed_AF_popmax,
+                      gnomad_female=AF_female,gnomad_noncancer=non_cancer_AF_popmax,
+                      SIFT_score,Polyphen2_HDIV_score,
+                      Polyphen2_HVAR_score,CADD_raw,
+                      CLNSIG)
   
   fin_dt=lapply(names(x),function(x1){
     x[[x1]] %>% #mutate(chr=as.character(chr)) %>%
@@ -168,7 +176,7 @@ d=readRDS(sprintf("afch_%s.rds",opt$out))
 #names(d)
 lapply(1:length(d),function(i){
   rmarkdown::render(
-    input  = 'Annotation_render.Rmd',
+    input  = '3_Annotation_render.Rmd',
     output_file = names(d)[i],
     params = list(
       af_file = sprintf("afch_%s.rds",opt$out),

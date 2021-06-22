@@ -1,7 +1,7 @@
 ---
 output:   
    flexdashboard::flex_dashboard:
-   orientation: columns
+   orientation: rows
    source_code: embed
 params:
   vt_file:
@@ -52,8 +52,6 @@ afch=readRDS(params$af_file)
 #  dplyr::select(-TotalPAMSites)
 
 
-
-
 newdt=left_join(afch[[params$id_file]],vt_full[[params$id_file]],by="af.id") %>%
   mutate(Biallelic=case_when(
     nchar(ALT)==1 & ALT!="-" ~ "Biallelic",
@@ -78,10 +76,15 @@ newdt=left_join(afch[[params$id_file]],vt_full[[params$id_file]],by="af.id") %>%
   relocate(Aligned,.after=ALT) %>%
   relocate(Reference,.after=Aligned) %>% distinct()
 
-newdt1=filter(newdt,PAMsite %in% c('32363392|32363494','32363392','32363494') &
-          AlignError=='NoError' &   WithinRange=="WithinRange" &  Biallelic=="Biallelic" &
-                 n_deleted==0 & n_inserted==0)
 
+newdt1=filter(newdt,
+              PAMsite %in% c('32363392|32363494','32363392','32363494') &
+          AlignError=='NoError' &   WithinRange=="WithinRange" &  Biallelic=="Biallelic" &
+                 n_deleted==0 & n_inserted==0 & Start!=32363392 & Start!=32363494)
+
+newdt2=newdt1 %>% 
+  group_by(chr,Start,REF,ALT) %>%
+  summarize(Reads_total=sum(Reads_n),Reads_prop_total=sum(Reads_prop))
 #shared_dt1=SharedData$new(afch[[params$id_file]],~af.id,group="id_subset")
 #shared_dt2=SharedData$new(vt_full[[params$id_file]],~af.id,group="id_subset")
 #shared_dt3=SharedData$new(newdt,~af.id,group="id_subset")
@@ -126,13 +129,23 @@ DT::datatable(shared_dt3,rownames=F,fillContainer = F,
 Final Table
 =======================================================================
 
-Column
------------------------------------------------------------------------
-
 ```{r}
 DT::datatable(newdt1,rownames=F,fillContainer = F,
               extensions="Buttons",
+              caption = 'Table 1: Final Filtered Allele IDs',
               options=list( dom = 'Bfrtip',
               columnDefs = list(list(width = '200px', targets = "_all")))) %>%
   formatRound('Reads_prop', 4) 
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+DT::datatable(newdt2,rownames=F,fillContainer = F,
+              extensions="Buttons",
+              caption = 'Table 2: Summed Reads by Common SNVs',
+              options=list( dom = 'Bfrtip',
+              columnDefs = list(list(width = '200px', targets = "_all")))) %>%
+  formatRound('Reads_prop_total', 4) 
 ```
