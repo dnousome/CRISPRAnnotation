@@ -73,11 +73,12 @@ allele_freq_tab=function(x){
 
 ##Filter on only those that have any number of mutations
 this <- mytable %>% 
-  filter(n_mutated > 0) %>%
-  filter(`#Reads`>5)
+  filter(n_mutated > 0) 
 
 
 
 that=split(this,1:nrow(this))
+#that=split(this[1:5,],1:5)
+
 lapply(that,align_crispresso)
 }

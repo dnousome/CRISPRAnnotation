@@ -147,7 +147,7 @@ vt_full=mapply(function(x,y){
                       gnomad=AF,gnomad_non_topmed=non_topmed_AF_popmax,
                       gnomad_female=AF_female,gnomad_noncancer=non_cancer_AF_popmax,
                       SIFT_score,Polyphen2_HDIV_score,
-                      Polyphen2_HVAR_score,CADD_raw,
+                      Polyphen2_HVAR_score,CADD_raw,phyloP30way_mammalian,
                       CLNSIG)
   
   fin_dt=lapply(names(x),function(x1){
