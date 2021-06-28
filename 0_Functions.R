@@ -81,4 +81,4 @@ that=split(this,1:nrow(this))
 }
 
 
-lapply(that,align_crispresso)
+#lapply(that,align_crispresso)
