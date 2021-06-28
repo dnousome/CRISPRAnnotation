@@ -57,7 +57,7 @@ align_crispresso=function(x){
                   n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
                   Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
     
-    print(nrow(vt_snp)==x$n_mutated)
+    #print(nrow(vt_snp)==x$n_mutated)
     vt_snp
   }
   
@@ -75,10 +75,10 @@ allele_freq_tab=function(x){
 this <- mytable %>% 
   filter(n_mutated > 0) 
 
-
-
 that=split(this,1:nrow(this))
-#that=split(this[1:5,],1:5)
+#that=split(this[1:20,],1:20)
+
+}
+
 
 lapply(that,align_crispresso)
-}

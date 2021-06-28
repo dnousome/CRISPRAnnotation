@@ -7,6 +7,8 @@ library(biomaRt)
 library(Biostrings)
 library(GenomicRanges)
 library(httr)
+library(parallel)
+
 set_config(config(ssl_verifypeer = 0L))
 
 
@@ -71,7 +73,22 @@ gene_sequence = gene_sequence_info$sequence[gene_sequence_info$gene==opt$gene]
 ##Read in the data
 ##Source the functions
 source("0_Functions.R")
-out=lapply(myfiles,allele_freq_tab)
+out_tab<-lapply(myfiles,allele_freq_tab)
+
+out=list()
+#system.time(
+#  for (i in 1:length(out_tab)){
+#  out[[i]]<-lapply(out_tab[[i]],align_crispresso)
+#  }
+#)
+
+numCores=detectCores()-1
+#system.time(
+  for (i in 1:length(out_tab)){
+  out <- mclapply(out_tab[[1]], align_crispresso, mc.cores = numCores)
+}
+#  )
+
 
 ##For annovar Keep on the REF/ALT
 vt=lapply(out,function(x){
