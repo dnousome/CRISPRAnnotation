@@ -35,6 +35,9 @@ vt_full=readRDS(params$vt_file)
 afch=readRDS(params$af_file)
 
 
+
+pamsites=unlist(strsplit(pamsites,","))
+
 newdt=left_join(afch[[params$id_file]],vt_full[[params$id_file]],by="af.id") %>%
   mutate(Biallelic=case_when(
     nchar(ALT)==1 & ALT!="-" ~ "Biallelic",
