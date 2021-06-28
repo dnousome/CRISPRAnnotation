@@ -12,6 +12,12 @@ params:
     value: x 
   id_file:
     value: x 
+  pamsites:
+    value: x
+  startrange:
+    value: x
+  endrange:
+    value: x
 title: "`r params$title`"
 ---
 
@@ -36,7 +42,10 @@ afch=readRDS(params$af_file)
 
 
 
-pamsites=unlist(strsplit(pamsites,","))
+pamsites=unlist(strsplit(params$pamsites,","))
+startrange=params$startrange
+endrange=params$endrange
+      
 
 newdt=left_join(afch[[params$id_file]],vt_full[[params$id_file]],by="af.id") %>%
   mutate(Biallelic=case_when(
