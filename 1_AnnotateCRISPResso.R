@@ -17,6 +17,12 @@ option_list = list(
               help="Path to All CRISPRESSOFiles with Sample Directories/Alleles_frequency_table.zip", metavar="character"),
   make_option(c("-g", "--gene"), type="character", default="BRCA2", 
               help="Gene name to grab coordinates for", metavar="character"),
+  make_option(c("-pam", "--pamsite"), type="character", default=NULL, 
+              help="PAMSites: If more than one add comma to indicate [default= %default]", metavar="character"),
+  make_option(c("-s", "--start"), type="integer", default=NULL, 
+              help="Start Filter Range", metavar="integer"),
+  make_option(c("-e", "--end"), type="integer", default=NULL, 
+              help="End Filter Range", metavar="integer"),
   make_option(c("-o", "--out"), type="character", default="output", 
               help="output file name [default= %default]", metavar="character")
 ); 
@@ -76,18 +82,15 @@ source("0_Functions.R")
 out_tab<-lapply(myfiles,allele_freq_tab)
 
 out=list()
-#system.time(
-#  for (i in 1:length(out_tab)){
-#  out[[i]]<-lapply(out_tab[[i]],align_crispresso)
-#  }
-#)
+
 
 numCores=detectCores()-1
-#system.time(
-  for (i in 1:length(out_tab)){
-  out <- mclapply(out_tab[[1]], align_crispresso, mc.cores = numCores)
+
+for (i in 1:length(out_tab)){
+    out[[i]] <- mclapply(out_tab[[i]], align_crispresso, mc.cores = numCores)
 }
-#  )
+
+names(out)=names(myfiles)
 
 
 ##For annovar Keep on the REF/ALT
@@ -199,7 +202,10 @@ lapply(1:length(d),function(i){
       af_file = sprintf("afch_%s.rds",opt$out),
       vt_file   = sprintf("vt_full_%s.rds",opt$out),
       id_file= i,
-      title= names(d)[i]
+      title= names(d)[i],
+      pamsites=opt$pamsite,
+      startrange=opt$start,
+      endrange=opt$end
     )
   )  
 })

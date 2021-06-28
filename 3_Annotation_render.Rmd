@@ -34,42 +34,27 @@ Inputs {.sidebar}
 vt_full=readRDS(params$vt_file) 
 afch=readRDS(params$af_file)
 
-#vt_full[[params$id_file]]=vt_full[[params$id_file]] %>%
-#  mutate(WithinRange=case_when(
-#    (Start < 32363397|Start > 32363533)~"OutsideRange",
-#    (End < 32363397|End > 32363533)~"OutsideRange",
-#    TRUE~ "WithinRange")
-#  )  %>%
-#  group_by(af.id) %>%
-#  mutate(TotalPAMSites = case_when((sum(Start == 32363392,Start == 32363494)==2)~2,
-#                                   (sum(Start == 32363392,Start == 32363494)==1)~1,TRUE ~ 0)) %>%
-#  mutate(PAMsite = case_when(
-#    TotalPAMSites==2 ~ '32363392|32363494',
-#    TotalPAMSites==1 & any(Start %in% 32363392) ~"32363392",
-#    TotalPAMSites==1 & any(Start %in% 32363494)~"32363494"
-#  )) %>%
-#  ungroup() %>%
-#  dplyr::select(-TotalPAMSites)
-
 
 newdt=left_join(afch[[params$id_file]],vt_full[[params$id_file]],by="af.id") %>%
   mutate(Biallelic=case_when(
     nchar(ALT)==1 & ALT!="-" ~ "Biallelic",
     TRUE~"Indel/Multiallelic"))  %>%
   mutate(WithinRange=case_when(
-    (Start < 32363397|Start > 32363533)~"OutsideRange",
-    (End < 32363397|End > 32363533)~"OutsideRange",
+    (Start < startrange|Start > endrange)~"OutsideRange",
+    (End < startrange|End > endrange)~"OutsideRange",
     TRUE~ "WithinRange"))  %>%
   mutate(AlignError=case_when(
     grepl("-",Aligned) & (n_deleted==0)~"CRISPRessoError",
     TRUE~"NoError")) %>%
   group_by(af.id) %>%
-  mutate(TotalPAMSites = case_when((sum(Start == 32363392,Start == 32363494)==2)~2,
-                                   (sum(Start == 32363392,Start == 32363494)==1)~1,TRUE ~ 0)) %>%
+  
+  
+  mutate(TotalPAMSites = sum(unique(Start) %in% pamsites))%>%
+  
   mutate(PAMsite = case_when(
-    TotalPAMSites==2 ~ '32363392|32363494',
-    TotalPAMSites==1 & any(Start %in% 32363392) ~"32363392",
-    TotalPAMSites==1 & any(Start %in% 32363494)~"32363494"
+    TotalPAMSites==length(pamsites) ~ paste(as.character(pamsites),collapse="|"),
+    TotalPAMSites==1 & any(Start %in% pamsites[1]) ~as.character(pamsites[1]),
+    TotalPAMSites==1 & any(Start %in% pamsites[2])~as.character(pamsites[2])
   )) %>%
   ungroup() %>%
   dplyr::select(-TotalPAMSites) %>%
@@ -78,9 +63,9 @@ newdt=left_join(afch[[params$id_file]],vt_full[[params$id_file]],by="af.id") %>%
 
 
 newdt1=filter(newdt,
-              PAMsite %in% c('32363392|32363494','32363392','32363494') &
-          AlignError=='NoError' &   WithinRange=="WithinRange" &  Biallelic=="Biallelic" &
-                 n_deleted==0 & n_inserted==0 & Start!=32363392 & Start!=32363494)
+              PAMsite %in% c(paste(as.character(pamsites),collapse="|"),pamsites) &
+                AlignError=='NoError' &   WithinRange=="WithinRange" &  Biallelic=="Biallelic" &
+                n_deleted==0 & n_inserted==0 & Start!=startrange & Start!=endrange)
 
 newdt2=newdt1 %>% 
   group_by(chr,Start,REF,ALT) %>%
