@@ -13,7 +13,7 @@ set_config(config(ssl_verifypeer = 0L))
 
 
 option_list = list(
-  make_option(c("-f", "--filepath"), type="character", default=NULL, 
+  make_option(c("-i", "--inputpath"), type="character", default=NULL, 
               help="Path to All CRISPRESSOFiles with Sample Directories/Alleles_frequency_table.zip", metavar="character"),
   make_option(c("-g", "--gene"), type="character", default="BRCA2", 
               help="Gene name to grab coordinates for", metavar="character"),
