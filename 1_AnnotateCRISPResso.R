@@ -31,7 +31,7 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
 
-if (is.null(opt$path)){
+if (is.null(opt$inputpath)){
   print_help(opt_parser)
   stop("Path Must be specified", call.=FALSE)
 }
@@ -41,7 +41,7 @@ if (is.null(opt$path)){
 
 #batch_dir="~/Documents/projects/ccbr1046/combined_flowcells/CRISPRessoBatch_on_batch"
 
-file_dir=opt$path
+file_dir=opt$inputpath
 crispresso_file_name="Alleles_frequency_table.zip"
 myfiles = list.files(path=file_dir, pattern = crispresso_file_name, recursive = T, full.names = T)
 names(myfiles) = gsub("^CRISPResso_on_","",basename(dirname(myfiles)))
