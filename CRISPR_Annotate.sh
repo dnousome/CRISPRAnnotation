@@ -6,7 +6,7 @@ do
 key="$1"
          
 case $key in
-  -p|--path)
+  -f|--path)
   CRISPPath="$2"
   shift # past argument
   shift # past value
@@ -26,7 +26,7 @@ case $key in
   shift # past argument
   shift # past value
   ;;
-  -pam|--pamsite)
+  -p|--pamsite)
   PAMSITE="$2"
   shift # past argument
   shift # past value
@@ -42,7 +42,7 @@ set -- "${POSITIONAL[@]}"
 echo "CRISPResso Path = ${CRISPPath}"
 echo "Gene = ${GENE}"
 echo "Start = ${START}"
-echo "END = ${END}"
+echo "End = ${END}"
 echo "PAMSite = ${PAMSITE}"
 
 if [[ -n $1 ]]; then
