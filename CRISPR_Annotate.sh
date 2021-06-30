@@ -31,6 +31,11 @@ case $key in
   shift # past argument
   shift # past value
   ;;
+  -o|--output)
+  OUTPUT="$2"
+  shift # past argument
+  shift # past value
+  ;;
   *)    
   POSITIONAL+=("$1") # save it in an array for later
   shift 
@@ -44,6 +49,7 @@ echo "Gene = ${GENE}"
 echo "Start = ${START}"
 echo "End = ${END}"
 echo "PAMSite = ${PAMSITE}"
+echo "Output Name = ${OUTPUT}"
 
 if [[ -n $1 ]]; then
 echo "Last line of file specified as non-opt/last argument:"
@@ -52,7 +58,7 @@ fi
 
 SUBMIT_SCRIPT="CRISPR_annot_submit.slurm"
 subdate=$(date +%F_%H%M%S)
-echo -e "#!/usr/bin/bash\nmodule load R/4.0\nRscript 1_AnnotateCRISPResso.R -i $CRISPPath -g $GENE -s $START -e $END -p $PAMSITE"> $SUBMIT_SCRIPT
+echo -e "#!/usr/bin/bash\nmodule load R/4.0\nRscript 1_AnnotateCRISPResso.R -i $CRISPPath -g $GENE -s $START -e $END -p $PAMSITE -o $OUTPUT"> $SUBMIT_SCRIPT
 echo "Submitting pipeline to cluster... "
 
 primaryID=$(sbatch --cpus-per-task=24 --mem=64g --time 48:00:00 --partition norm --output submit_"$subdate".log --error error_"$subdate".log $SUBMIT_SCRIPT)

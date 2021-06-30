@@ -84,13 +84,16 @@ out_tab<-lapply(myfiles,allele_freq_tab)
 out=list()
 
 
-numCores=detectCores()-1
+numCores=as.integer(Sys.getenv("SLURM_JOB_CPUS_PER_NODE"))
 
 for (i in 1:length(out_tab)){
     out[[i]] <- mclapply(out_tab[[i]], align_crispresso, mc.cores = numCores)
 }
 
+
 names(out)=names(myfiles)
+##Save output temporarily 
+saveRDS(out,sprintf("temp_%s.rds",opt$out))
 
 
 ##For annovar Keep on the REF/ALT
@@ -122,27 +125,6 @@ lapply(avin,function(x)system(sprintf("./2_runannovar.sh --annovarin %s",x)))
 #####Parse after output
 annos=paste0(names(myfiles),"_toanno.avinput.hg38_multianno.txt")
 annos=annos[order(sapply(strsplit(annos,"[/_]"),'[',2))]
-
-#annos="~/Downloads/A1_S4_L001_R1_001_A1_S4_L001_R2_001_toanno.avinput.hg38_multianno.txt"
-#anno_out=mapply(function(x,y){
-#  anno_in=read_tsv(x,guess_max = 20000)  %>%
-#    distinct() %>%
-#    dplyr::select(Chr,Start,End,Ref,Alt,Func.refGene,Gene.refGene,AAChange.refGene,
-#                  gnomad=AF,gnomad_non_topmed=non_topmed_AF_popmax,
-#                  gnomad_female=AF_female,gnomad_noncancer=non_cancer_AF_popmax,
-#                  SIFT_score,Polyphen2_HDIV_score,
-##                  Polyphen2_HVAR_score,CADD_raw,
-#                  CLNSIG)
-  
-  
-#  y %>% #mutate(chr=as.character(chr)) %>%
-#    left_join(.,anno_in,by=c('chr'="Chr",'Start','End','REF'="Ref",'ALT'="Alt"))# %>%
-  #filter(Func.refGene=="exonic") %>% 
-  #dplyr::select(-Func.refGene)
-  
-  
-  
-#},annos,vt,SIMPLIFY=F)
 
 
 ##ADD THE FLOSS
@@ -180,29 +162,74 @@ vt_full=mapply(function(x,y){
   
 },out,annos,SIMPLIFY = F)
 
-
-#saveRDS(anno_out,"out.anno.RDS")
-#saveRDS(out,"original_vt.RDS")
-#saveRDS(vt,"vt.rds")
-
-
 saveRDS(afch,sprintf("afch_%s.rds",opt$out))
 saveRDS(vt_full,sprintf("vt_full_%s.rds",opt$out))
 
 
 
+
+af_file=readRDS(sprintf("afch_%s.rds",opt$out))
+vt_file=readRDS(sprintf("vt_full_%s.rds",opt$out))
+
+
+
+###Create excel as a backup
+
+lapply(1:length(af_file),function(i){
+  title= names(af_file)[i]
+  pamsites=unlist(strsplit(as.character(opt$pamsite),","))
+  startrange=as.numeric(opt$start)
+  endrange=as.numeric(opt$end)
+  
+  newdt=left_join(af_file[[i]],vt_file[[i]],by="af.id") %>%
+    mutate(Biallelic=case_when(
+      nchar(ALT)==1 & ALT!="-" ~ "Biallelic",
+      TRUE~"Indel/Multiallelic"))  %>%
+    mutate(WithinRange=case_when(
+      (Start <= startrange|Start >= endrange)~"OutsideRange",
+      (End <= startrange|End >= endrange)~"OutsideRange",
+      TRUE~ "WithinRange"))  %>%
+    mutate(AlignError=case_when(
+      grepl("-",Aligned) & (n_deleted==0)~"CRISPRessoError",
+      TRUE~"NoError")) %>%
+    group_by(af.id) %>%
+    mutate(TotalPAMSites = sum(unique(Start) %in% pamsites))%>%
+    mutate(PAMsite = case_when(
+      TotalPAMSites==length(pamsites) ~ paste(as.character(pamsites),collapse="|"),
+      TotalPAMSites==1 & any(Start %in% pamsites[1]) ~as.character(pamsites[1]),
+      TotalPAMSites==1 & any(Start %in% pamsites[2])~as.character(pamsites[2])
+    )) %>%
+    ungroup() %>%
+    dplyr::select(-TotalPAMSites) %>%
+    relocate(Aligned,.after=ALT) %>%
+    relocate(Reference,.after=Aligned) %>% distinct()
+  
+  
+  newdt1=filter(newdt,
+                PAMsite %in% c(paste(as.character(pamsites),collapse="|"),pamsites) &
+                  AlignError=='NoError' &   WithinRange=="WithinRange" &  Biallelic=="Biallelic" &
+                  n_deleted==0 & n_inserted==0 & Start!=startrange & Start!=endrange)
+  
+  newdt2=newdt1 %>% 
+    group_by(chr,Start,REF,ALT) %>%
+    summarize(Reads_total=sum(Reads_n),Reads_prop_total=sum(Reads_prop))
+  
+  dt=list(AllReads=newdt,FinalReads=newdt1,SummarizedFinalReads=newdt2)
+  openxlsx::write.xlsx(dt,sprintf("%s_annotated.xlsx",title))
+})
+
+
 stack_size = getOption("pandoc.stack.size", default = "512m")
-d=readRDS(sprintf("afch_%s.rds",opt$out))
-#names(d)
-lapply(1:length(d),function(i){
+
+lapply(1:length(af_file),function(i){
   rmarkdown::render(
     input  = '3_Annotation_render.Rmd',
-    output_file = names(d)[i],
+    output_file = names(af_file)[i],
     params = list(
       af_file = sprintf("afch_%s.rds",opt$out),
       vt_file   = sprintf("vt_full_%s.rds",opt$out),
       id_file= i,
-      title= names(d)[i],
+      title= names(af_file)[i],
       pamsites=opt$pamsite,
       startrange=opt$start,
       endrange=opt$end

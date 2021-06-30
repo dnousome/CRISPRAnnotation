@@ -17,11 +17,11 @@ align_crispresso=function(x){
   
   if(nrow(ins)>0){
 
-      ins_ref=sapply(split(ins,1:nrow(ins)),function(y){
+    ins_ref=sapply(split(ins,1:nrow(ins)),function(y){
 
-      as.character(subseq(
-        DNAString(gene_sequence),(d@subject@range@start+y$start-2),
-        d@subject@range@start+y$start-2))
+        as.character(subseq(
+          DNAString(gene_sequence),(d@subject@range@start+y$start-2),
+          d@subject@range@start+y$start-2))
       })
     
     ins_alt=lapply(split(ins,1:nrow(ins)),function(y){
