@@ -56,7 +56,7 @@ echo "Last line of file specified as non-opt/last argument:"
 tail -1 $1
 fi
 
-SUBMIT_SCRIPT="CRISPR_annot_submit.slurm"
+SUBMIT_SCRIPT="CRISPR_annot_submit_$output.slurm"
 subdate=$(date +%F_%H%M%S)
 echo -e "#!/usr/bin/bash\nmodule load R/4.0\nRscript 1_AnnotateCRISPResso.R -i $CRISPPath -g $GENE -s $START -e $END -p $PAMSITE -o $OUTPUT"> $SUBMIT_SCRIPT
 echo "Submitting pipeline to cluster... "
