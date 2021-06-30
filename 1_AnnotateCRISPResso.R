@@ -124,7 +124,8 @@ lapply(avin,function(x)system(sprintf("./2_runannovar.sh --annovarin %s",x)))
 
 #####Parse after output
 annos=paste0(names(myfiles),"_toanno.avinput.hg38_multianno.txt")
-annos=annos[order(sapply(strsplit(annos,"[/_]"),'[',2))]
+#annos=annos[order(sapply(strsplit(annos,"[/_]"),'[',2))]
+annos=annos[order(match(names(myfiles),names(out)))]
 
 
 ##ADD THE FLOSS
@@ -153,12 +154,16 @@ vt_full=mapply(function(x,y){
                       CLNSIG)
   
   fin_dt=lapply(names(x),function(x1){
-    x[[x1]] %>% #mutate(chr=as.character(chr)) %>%
-      left_join(.,anno_in,by=c('chr'="Chr",'Start','End','REF'="Ref",'ALT'="Alt")) %>%
-      dplyr::select(-Aligned,-Reference,-n_deleted,-n_inserted,-n_mutated,-Reads_n,-Reads_prop) %>%
-      mutate(af.id=as.numeric(x1)) 
+    if(!is.null(x[[x1]])){
+      x[[x1]] %>% 
+        mutate(af.id=as.numeric(x1)) 
+    }
   })
-  bind_rows(fin_dt) 
+  bind_rows(fin_dt) %>% 
+    left_join(.,anno_in,by=c('chr'="Chr",'Start','End','REF'="Ref",'ALT'="Alt")) %>%
+    dplyr::select(-Aligned,-Reference,-n_deleted,-n_inserted,-n_mutated,-Reads_n,-Reads_prop) %>%
+    relocate(af.id,.after=last_col())
+  
   
 },out,annos,SIMPLIFY = F)
 
