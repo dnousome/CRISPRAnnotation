@@ -48,8 +48,12 @@ names(myfiles) = gsub("^CRISPResso_on_","",basename(dirname(myfiles)))
 
 
 ##Load the Gene Name
-
-mart = useMart('ensembl', dataset="hsapiens_gene_ensembl", host = "www.ensembl.org")
+if(file.exists(sprintf("%s_gene_coords.rds",opt$gene)) & file.exists(sprintf("%s_gene_sequence.rds",opt$gene))){
+  gene_coords=readRDS(sprintf("%s_gene_coords.rds",opt$gene))
+  gene_sequence=readRDS(sprintf("%s_gene_sequence.rds",opt$gene))
+  
+  }else{
+mart = useMart('ensembl', dataset="hsapiens_gene_ensembl")
 #mart = useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl",host = "asia.ensembl.org")
 
 
@@ -74,7 +78,9 @@ gene_coords = gene_sequence_info[gene_sequence_info$gene==opt$gene,
                                  c("chr","start","end","strand")]
 gene_sequence = gene_sequence_info$sequence[gene_sequence_info$gene==opt$gene]
 
-
+saveRDS(gene_coords,sprintf("%s_gene_coords.rds",opt$gene))
+saveRDS(gene_sequence,sprintf("%s_gene_sequence.rds",opt$gene))
+}
 
 ##Read in the data
 ##Source the functions
