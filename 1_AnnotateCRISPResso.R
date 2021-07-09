@@ -146,8 +146,9 @@ annos=annos[order(match(names(myfiles),names(out)))]
 afch=lapply(out,function(x){
   s=lapply(x,function(y)y[1,])
   bind_rows(s) %>% 
-    dplyr::select(Aligned,Reference,n_deleted,n_inserted,n_mutated,Reads_n,Reads_prop) %>%
+    dplyr::select(Aligned,n_deleted,n_inserted,n_mutated,Reads_n,Reads_prop) %>%
     mutate(af.id=1:nrow(.)) %>%
+    #mutate(Reference=)
     dplyr::select(af.id,everything())
 })
 
@@ -170,7 +171,7 @@ vt_full=mapply(function(x,y){
   })
   bind_rows(fin_dt) %>% 
     left_join(.,anno_in,by=c('chr'="Chr",'Start','End','REF'="Ref",'ALT'="Alt")) %>%
-    dplyr::select(-Aligned,-Reference,-n_deleted,-n_inserted,-n_mutated,-Reads_n,-Reads_prop) %>%
+    dplyr::select(-Aligned,-n_deleted,-n_inserted,-n_mutated,-Reads_n,-Reads_prop) %>%
     relocate(af.id,.after=last_col())
   
   

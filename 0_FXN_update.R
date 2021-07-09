@@ -20,7 +20,7 @@ align_crispresso=function(x){
   vt_snp=tibble(chr=gene_coords$chr,Start=gene_coords$start+mmt$SubjectStart-1,
                 End=gene_coords$start+mmt$SubjectEnd-1,
                 REF=mmt$SubjectSubstring,ALT=mmt$PatternSubstring,
-                Aligned=x$Aligned_Sequence,
+                Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence,
                 n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
                 Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
   
@@ -42,7 +42,7 @@ align_crispresso=function(x){
                   Start=(gene_coords$start+d@subject@range@start+ins$start)-3,
                   End=gene_coords$start+ins$start+d@subject@range@start+ins$width-3,
                   REF="-",ALT=ins_alt$ins_seqs,
-                  Aligned=x$Aligned_Sequence,
+                  Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence,
                   n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
                   Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
     
@@ -62,7 +62,7 @@ align_crispresso=function(x){
                     Start=(gene_coords$start+d@subject@range@start+del_ranges$start)-2,
                     End=(gene_coords$start+d@subject@range@start+del_ranges$end)-2,
                     REF=data.frame(del_seqs)$del_seqs,ALT="-",
-                    Aligned=x$Aligned_Sequence,
+                    Aligned=x$Aligned_Sequence,,Reference=x$Reference_Sequence,
                     n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
                     Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
       
