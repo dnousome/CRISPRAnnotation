@@ -87,6 +87,7 @@ out=list()
 
 
 numCores=as.integer(Sys.getenv("SLURM_JOB_CPUS_PER_NODE"))
+#numCores=detectCores()-2
 
 for (i in 1:length(out_tab)){
   out[[i]] <- mclapply(out_tab[[i]], align_crispresso, mc.cores = numCores)

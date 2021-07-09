@@ -3,7 +3,6 @@ align_crispresso=function(x){
   
   ##Check the alignment
   #seq <- c(alignedPattern(d), alignedSubject(d))
-  #s1=DECIPHER::ConsensusSequence(seq)
   #DECIPHER::BrowseSeqs(seq)
   
   mmt=mismatchTable(d)
@@ -12,7 +11,7 @@ align_crispresso=function(x){
   
   ##INDELS FIRST TO ADD TO TABLE
   indT=indel(d)
-  #print(c(paste0("INS=",length(indT@insertion@unlistData@start)),paste0("DEL=",length(indT@deletion@unlistData@start))))
+
   ins=data.frame(indT@insertion@unlistData)
   del=data.frame(indT@deletion@unlistData)
   
@@ -54,7 +53,7 @@ align_crispresso=function(x){
       
       
       shift <- c(0L, head(cumsum(width(indT@deletion[[1]])), n=-1L))
-      del_ranges <- shift(del_ranges, shift)
+      del_ranges <- shift(indT@deletion[[1]], shift)
       del_seqs <- extractAt(d@subject@unaligned[[1]], del_ranges)
       del_ranges=data.frame(start=del_ranges@start-sum(ins$width),end=del_ranges@start-sum(ins$width)+del_ranges@width)
     
@@ -95,9 +94,8 @@ allele_freq_tab=function(x){
     filter(n_mutated > 0) 
   
   that=split(this,1:nrow(this))
-  #that=split(this[1:20,],1:20)
+
   
 }
 
 
-#lapply(that,align_crispresso)
