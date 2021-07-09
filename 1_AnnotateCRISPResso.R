@@ -132,7 +132,7 @@ lapply(avin,function(x)system(sprintf("./2_runannovar.sh --annovarin %s",x)))
 
 
 #####Parse after output
-annos=paste0("annovar/",names(myfiles),"_toanno.avinput.hg38_multianno.txt")
+annos=paste0("annovar/",names(myfiles),".hg38_multianno.txt")
 #annos=annos[order(sapply(strsplit(annos,"[/_]"),'[',2))]
 annos=annos[order(match(names(myfiles),names(out)))]
 
@@ -146,7 +146,7 @@ annos=annos[order(match(names(myfiles),names(out)))]
 afch=lapply(out,function(x){
   s=lapply(x,function(y)y[1,])
   bind_rows(s) %>% 
-    dplyr::select(Aligned,n_deleted,n_inserted,n_mutated,Reads_n,Reads_prop) %>%
+    dplyr::select(Aligned,Reference,n_deleted,n_inserted,n_mutated,Reads_n,Reads_prop) %>%
     mutate(af.id=1:nrow(.)) %>%
     #mutate(Reference=)
     dplyr::select(af.id,everything())
@@ -171,7 +171,7 @@ vt_full=mapply(function(x,y){
   })
   bind_rows(fin_dt) %>% 
     left_join(.,anno_in,by=c('chr'="Chr",'Start','End','REF'="Ref",'ALT'="Alt")) %>%
-    dplyr::select(-Aligned,-n_deleted,-n_inserted,-n_mutated,-Reads_n,-Reads_prop) %>%
+    dplyr::select(-Aligned,-Reference,-n_deleted,-n_inserted,-n_mutated,-Reads_n,-Reads_prop) %>%
     relocate(af.id,.after=last_col())
   
   
@@ -180,4 +180,56 @@ vt_full=mapply(function(x,y){
 saveRDS(afch,sprintf("afch_%s.rds",opt$out))
 saveRDS(vt_full,sprintf("vt_full_%s.rds",opt$out))
 
+
+
+lapply(1:length(af_file),function(i){
+  title= names(af_file)[i]
+  pamsites=unlist(strsplit(as.character(opt$pamsite),","))
+  startrange=as.numeric(opt$start)
+  endrange=as.numeric(opt$end)
+  
+  newdt=left_join(af_file[[i]],vt_file[[i]],by="af.id") %>%
+    mutate(Biallelic=case_when(
+      nchar(ALT)==1 & ALT!="-" ~ "Biallelic",
+      TRUE~"Indel/Multiallelic"))  %>%
+    mutate(WithinRange=case_when(
+      (Start <= startrange|Start >= endrange)~"OutsideRange",
+      (End <= startrange|End >= endrange)~"OutsideRange",
+      TRUE~ "WithinRange"))  %>%
+    mutate(AlignError=case_when(
+      grepl("-",Aligned) & (n_deleted==0)~"CRISPRessoError",
+      TRUE~"NoError")) %>%
+    group_by(af.id) %>%
+    mutate(Reference=ifelse(duplicated(Reference),"",Reference)) %>%
+    mutate(TotalPAMSites = sum(unique(Start) %in% pamsites))%>%
+    mutate(PAMsite = case_when(
+      TotalPAMSites==length(pamsites) ~ paste(as.character(pamsites),collapse="|"),
+      TotalPAMSites==1 & any(Start %in% pamsites[1]) ~as.character(pamsites[1]),
+      TotalPAMSites==1 & any(Start %in% pamsites[2])~as.character(pamsites[2])
+    )) %>%
+    mutate(true_n_del=sum((ALT=="-") & (Start >= startrange & Start <= endrange) & (End >= startrange & End <= endrange)),
+           true_n_ins=sum((REF=="-") & (Start >= startrange & Start <= endrange) & (End >= startrange & End <= endrange)),
+           true_n_mutated=sum((ALT %in% c("A","T","G","C")) & (Start >= startrange & Start <= endrange) & (End >= startrange& End <= endrange))
+    ) %>%
+    ungroup() %>%
+    dplyr::select(-TotalPAMSites) %>%
+    relocate(Aligned,.after=ALT) %>%
+    relocate(Reference,.after=Aligned) %>% distinct()
+  
+  
+  newdt1=filter(newdt,
+                PAMsite %in% c(paste(as.character(pamsites),collapse="|"),pamsites) &
+                  AlignError=='NoError' &   WithinRange=="WithinRange" &  Biallelic=="Biallelic" &
+                  true_n_del==0 & true_n_ins==0 & true_n_mutated>=1 & true_n_mutated<=3 & Start!=startrange & Start!=endrange)
+  
+  newdt2=newdt1 %>% 
+    group_by(chr,Start,REF,ALT) %>%
+    summarize(Reads_total=sum(Reads_n),Reads_prop_total=sum(Reads_prop))
+  
+  newdt2=newdt1 %>% dplyr::select(chr,Start,End,REF,ALT,Func.refGene:CLNSIG) %>% distinct() %>%
+    left_join(newdt2,.,by=c('chr','Start','REF','ALT'))
+  
+  dt=list(AllReads=newdt,FinalReads=newdt1,SummarizedFinalReads=newdt2)
+  openxlsx::write.xlsx(dt,sprintf("%s_annotated.xlsx",title))
+})
 
