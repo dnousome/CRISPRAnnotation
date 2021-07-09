@@ -62,7 +62,7 @@ align_crispresso=function(x){
                     Start=(gene_coords$start+d@subject@range@start+del_ranges$start)-2,
                     End=(gene_coords$start+d@subject@range@start+del_ranges$end)-2,
                     REF=data.frame(del_seqs)$del_seqs,ALT="-",
-                    Aligned=x$Aligned_Sequence,,Reference=x$Reference_Sequence,
+                    Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence,
                     n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
                     Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
       
