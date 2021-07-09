@@ -58,7 +58,7 @@ my_attrs = c(gene="external_gene_name",chr="chromosome_name",start="start_positi
 
 gene_sequence_info = getBM(attributes = my_attrs,
                            filters = "external_gene_name", 
-                           values = opt$gene, mart = mart, verbose=F)
+                           values = opt$gene, mart = mart, verbose=T)
 
 
 gene_sequence_info = gene_sequence_info[,match(my_attrs, colnames(gene_sequence_info))]
