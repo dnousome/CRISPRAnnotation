@@ -49,7 +49,7 @@ names(myfiles) = gsub("^CRISPResso_on_","",basename(dirname(myfiles)))
 
 ##Load the Gene Name
 
-mart = useMart('ensembl', dataset="hsapiens_gene_ensembl")
+mart = useMart('ensembl', dataset="hsapiens_gene_ensembl", host = "www.ensembl.org")
 #mart = useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl",host = "asia.ensembl.org")
 
 
