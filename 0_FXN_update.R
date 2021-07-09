@@ -71,13 +71,13 @@ align_crispresso=function(x){
     
   
   if(exists("vt_del") & exists("vt_ins")){
-    bind_rows(vt_del,vt_ins,vt_snp) %>% arrange(Start) %>%  filter(Start>32363397 & End<32363533) 
+    bind_rows(vt_del,vt_ins,vt_snp) %>% arrange(Start) #%>%  filter(Start>32363397 & End<32363533) 
   }else if(exists("vt_ins")){
-    bind_rows(vt_ins,vt_snp) %>% arrange(Start)%>%  filter(Start>32363397 & End<32363533) 
+    bind_rows(vt_ins,vt_snp) %>% arrange(Start) #%>%  filter(Start>32363397 & End<32363533) 
   }else if(exists("vt_del")){
-    bind_rows(vt_del,vt_snp) %>% arrange(Start)%>%  filter(Start>32363397 & End<32363533) 
+    bind_rows(vt_del,vt_snp) %>% arrange(Start) #%>%  filter(Start>32363397 & End<32363533) 
   }else{
-    vt_snp %>% arrange(Start) %>%  filter(Start>32363397 & End<32363533) 
+    vt_snp %>% arrange(Start) #%>%  filter(Start>32363397 & End<32363533) 
   }
   
 }
