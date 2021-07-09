@@ -54,7 +54,7 @@ mart = useMart('ensembl', dataset="hsapiens_gene_ensembl")
 
 
 my_attrs = c(gene="external_gene_name",chr="chromosome_name",start="start_position",
-             end="end_position",strand="strand",sequence="gene_exon_intron")
+              end="end_position",strand="strand",sequence="gene_exon_intron")
 
 gene_sequence_info = getBM(attributes = my_attrs,
                            filters = "external_gene_name", 
@@ -89,7 +89,7 @@ out=list()
 numCores=as.integer(Sys.getenv("SLURM_JOB_CPUS_PER_NODE"))
 
 for (i in 1:length(out_tab)){
-  out[[i]] <- mclapply(out_tab[[i]], align_crispresso, mc.cores = numCores)
+    out[[i]] <- mclapply(out_tab[[i]], align_crispresso, mc.cores = numCores)
 }
 
 
@@ -105,8 +105,8 @@ vt=lapply(out,function(x){
 
 vt_annovar=lapply(out,function(x){
   bind_rows(x) %>% arrange(Start) %>%  dplyr::select(chr,Start,End,REF,ALT) %>%
-    distinct() 
-  
+  distinct() 
+   
 })
 
 ##Load this VT_annovar object into ANNOVAR
@@ -148,12 +148,12 @@ afch=lapply(out,function(x){
 vt_full=mapply(function(x,y){
   anno_in=read_tsv(y,guess_max=20000)  %>%
     distinct() %>%
-    dplyr::select(Chr,Start,End,Ref,Alt,Func.refGene,Gene.refGene,AAChange.refGene,
-                  gnomad=AF,gnomad_non_topmed=non_topmed_AF_popmax,
-                  gnomad_female=AF_female,gnomad_noncancer=non_cancer_AF_popmax,
-                  SIFT_score,Polyphen2_HDIV_score,
-                  Polyphen2_HVAR_score,CADD_raw,phyloP30way_mammalian,
-                  CLNSIG)
+        dplyr::select(Chr,Start,End,Ref,Alt,Func.refGene,Gene.refGene,AAChange.refGene,
+                      gnomad=AF,gnomad_non_topmed=non_topmed_AF_popmax,
+                      gnomad_female=AF_female,gnomad_noncancer=non_cancer_AF_popmax,
+                      SIFT_score,Polyphen2_HDIV_score,
+                      Polyphen2_HVAR_score,CADD_raw,phyloP30way_mammalian,
+                      CLNSIG)
   
   fin_dt=lapply(names(x),function(x1){
     if(!is.null(x[[x1]])){
@@ -171,5 +171,77 @@ vt_full=mapply(function(x,y){
 
 saveRDS(afch,sprintf("afch_%s.rds",opt$out))
 saveRDS(vt_full,sprintf("vt_full_%s.rds",opt$out))
+
+
+
+
+af_file=readRDS(sprintf("afch_%s.rds",opt$out))
+vt_file=readRDS(sprintf("vt_full_%s.rds",opt$out))
+
+
+
+###Create excel as a backup
+
+lapply(1:length(af_file),function(i){
+  title= names(af_file)[i]
+  pamsites=unlist(strsplit(as.character(opt$pamsite),","))
+  startrange=as.numeric(opt$start)
+  endrange=as.numeric(opt$end)
+  
+  newdt=left_join(af_file[[i]],vt_file[[i]],by="af.id") %>%
+    mutate(Biallelic=case_when(
+      nchar(ALT)==1 & ALT!="-" ~ "Biallelic",
+      TRUE~"Indel/Multiallelic"))  %>%
+    mutate(WithinRange=case_when(
+      (Start <= startrange|Start >= endrange)~"OutsideRange",
+      (End <= startrange|End >= endrange)~"OutsideRange",
+      TRUE~ "WithinRange"))  %>%
+    mutate(AlignError=case_when(
+      grepl("-",Aligned) & (n_deleted==0)~"CRISPRessoError",
+      TRUE~"NoError")) %>%
+    group_by(af.id) %>%
+    mutate(TotalPAMSites = sum(unique(Start) %in% pamsites))%>%
+    mutate(PAMsite = case_when(
+      TotalPAMSites==length(pamsites) ~ paste(as.character(pamsites),collapse="|"),
+      TotalPAMSites==1 & any(Start %in% pamsites[1]) ~as.character(pamsites[1]),
+      TotalPAMSites==1 & any(Start %in% pamsites[2])~as.character(pamsites[2])
+    )) %>%
+    ungroup() %>%
+    dplyr::select(-TotalPAMSites) %>%
+    relocate(Aligned,.after=ALT) %>%
+    relocate(Reference,.after=Aligned) %>% distinct()
+  
+  
+  newdt1=filter(newdt,
+                PAMsite %in% c(paste(as.character(pamsites),collapse="|"),pamsites) &
+                  AlignError=='NoError' &   WithinRange=="WithinRange" &  Biallelic=="Biallelic" &
+                  n_deleted==0 & n_inserted==0 & Start!=startrange & Start!=endrange)
+  
+  newdt2=newdt1 %>% 
+    group_by(chr,Start,REF,ALT) %>%
+    summarize(Reads_total=sum(Reads_n),Reads_prop_total=sum(Reads_prop))
+  
+  dt=list(AllReads=newdt,FinalReads=newdt1,SummarizedFinalReads=newdt2)
+  openxlsx::write.xlsx(dt,sprintf("%s_annotated.xlsx",title))
+})
+
+
+stack_size = getOption("pandoc.stack.size", default = "512m")
+
+lapply(1:length(af_file),function(i){
+  rmarkdown::render(
+    input  = '3_Annotation_render.Rmd',
+    output_file = names(af_file)[i],
+    params = list(
+      af_file = sprintf("afch_%s.rds",opt$out),
+      vt_file   = sprintf("vt_full_%s.rds",opt$out),
+      id_file= i,
+      title= names(af_file)[i],
+      pamsites=opt$pamsite,
+      startrange=opt$start,
+      endrange=opt$end
+    )
+  )  
+})
 
 
