@@ -132,7 +132,7 @@ lapply(avin,function(x)system(sprintf("./2_runannovar.sh --annovarin %s",x)))
 
 
 #####Parse after output
-annos=paste0(names(myfiles),"_toanno.avinput.hg38_multianno.txt")
+annos=paste0("annovar/",names(myfiles),"_toanno.avinput.hg38_multianno.txt")
 #annos=annos[order(sapply(strsplit(annos,"[/_]"),'[',2))]
 annos=annos[order(match(names(myfiles),names(out)))]
 
