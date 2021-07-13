@@ -19,6 +19,8 @@ option_list = list(
               help="Gene name to grab coordinates for", metavar="character"),
   make_option(c("-p", "--pamsite"), type="character", default=NULL, 
               help="PAMSites: If more than one add comma to indicate [default= %default]", metavar="character"),
+  make_option(c("-a", "--pamsiteallele"), type="character", default=NULL, 
+              help="PAMSitesAlleles: If more than one add comma to indicate [default= %default]", metavar="character"),
   make_option(c("-s", "--start"), type="integer", default=NULL, 
               help="Start Filter Range", metavar="integer"),
   make_option(c("-e", "--end"), type="integer", default=NULL, 
@@ -182,9 +184,16 @@ saveRDS(vt_full,sprintf("vt_full_%s.rds",opt$out))
 
 
 
+
+af_file=readRDS(sprintf("afch_%s.rds",opt$out))
+vt_file=readRDS(sprintf("vt_full_%s.rds",opt$out))
+
+
 lapply(1:length(af_file),function(i){
   title= names(af_file)[i]
   pamsites=unlist(strsplit(as.character(opt$pamsite),","))
+  pamsitesalt=unlist(strsplit(as.character(opt$pamsiteallele),","))
+  
   startrange=as.numeric(opt$start)
   endrange=as.numeric(opt$end)
   
@@ -201,18 +210,18 @@ lapply(1:length(af_file),function(i){
       TRUE~"NoError")) %>%
     group_by(af.id) %>%
     mutate(Reference=ifelse(duplicated(Reference),"",Reference)) %>%
-    mutate(TotalPAMSites = sum(unique(Start) %in% pamsites))%>%
+    mutate(TotalPAMSites = sum((Start %in% pamsites[1] & ALT==pamsitesalt[1] & REF %in% c("A","T","G","C")),
+                               (Start %in% pamsites[2] & ALT==pamsitesalt[2] & REF %in% c("A","T","G","C")))) %>%
     mutate(PAMsite = case_when(
       TotalPAMSites==length(pamsites) ~ paste(as.character(pamsites),collapse="|"),
-      TotalPAMSites==1 & any(Start %in% pamsites[1]) ~as.character(pamsites[1]),
-      TotalPAMSites==1 & any(Start %in% pamsites[2])~as.character(pamsites[2])
+      TotalPAMSites==1 & any(Start %in% pamsites[1] & ALT==pamsitesalt[1] & REF %in% c("A","T","G","C")) ~as.character(pamsites[1]),
+      TotalPAMSites==1 & any(Start %in% pamsites[2] & ALT==pamsitesalt[2] & REF %in% c("A","T","G","C")) ~as.character(pamsites[2])
     )) %>%
-    mutate(true_n_del=sum((ALT=="-") & (Start >= startrange & Start <= endrange) & (End >= startrange & End <= endrange)),
-           true_n_ins=sum((REF=="-") & (Start >= startrange & Start <= endrange) & (End >= startrange & End <= endrange)),
-           true_n_mutated=sum((ALT %in% c("A","T","G","C")) & (Start >= startrange & Start <= endrange) & (End >= startrange& End <= endrange))
+    mutate(true_n_del=sum((ALT=="-")),
+           true_n_ins=sum((REF=="-")), 
+           true_n_mutated=sum((ALT %in% c("A","T","G","C","N"))) 
     ) %>%
     ungroup() %>%
-    dplyr::select(-TotalPAMSites) %>%
     relocate(Aligned,.after=ALT) %>%
     relocate(Reference,.after=Aligned) %>% distinct()
   
@@ -220,7 +229,9 @@ lapply(1:length(af_file),function(i){
   newdt1=filter(newdt,
                 PAMsite %in% c(paste(as.character(pamsites),collapse="|"),pamsites) &
                   AlignError=='NoError' &   WithinRange=="WithinRange" &  Biallelic=="Biallelic" &
-                  true_n_del==0 & true_n_ins==0 & true_n_mutated>=1 & true_n_mutated<=3 & Start!=startrange & Start!=endrange)
+                  true_n_del==0 & true_n_ins==0 & Start!=startrange & Start!=endrange) %>% 
+    filter((true_n_mutated==2 & TotalPAMSites== 1)|(true_n_mutated==3 & TotalPAMSites==2)) %>%
+    filter(!Start %in% pamsites) 
   
   newdt2=newdt1 %>% 
     group_by(chr,Start,REF,ALT) %>%
@@ -230,6 +241,5 @@ lapply(1:length(af_file),function(i){
     left_join(newdt2,.,by=c('chr','Start','REF','ALT'))
   
   dt=list(AllReads=newdt,FinalReads=newdt1,SummarizedFinalReads=newdt2)
-  openxlsx::write.xlsx(dt,sprintf("%s_annotated.xlsx",title))
+  openxlsx::write.xlsx(dt,sprintf("%s_annotated.xlsx",title),overwrite = T)
 })
-
