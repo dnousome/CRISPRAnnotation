@@ -64,7 +64,7 @@ fi
 
 SUBMIT_SCRIPT="CRISPR_annot_submit_$OUTPUT.slurm"
 subdate=$(date +%F_%H%M%S)
-echo -e "#!/usr/bin/bash\nmodule load R/4.0\nRscript 1_AnnotateCRISPResso.R -i $CRISPPath -g $GENE -s $START -e $END -p $PAMSITE -a $PAMSITEALLELE -o $OUTPUT"> $SUBMIT_SCRIPT
+echo -e "#!/usr/bin/bash\nmodule load R/4.1\nRscript 1_AnnotateCRISPResso.R -i $CRISPPath -g $GENE -s $START -e $END -p $PAMSITE -a $PAMSITEALLELE -o $OUTPUT"> $SUBMIT_SCRIPT
 echo "Submitting pipeline to cluster... "
 
 primaryID=$(sbatch --cpus-per-task=24 --mem=64g --time 48:00:00 --partition norm --output submit_"$subdate".log --error error_"$subdate".log $SUBMIT_SCRIPT)

@@ -2,7 +2,7 @@ align_crispresso=function(x){
   d=pairwiseAlignment(DNAString(x$Aligned_Sequence),DNAString(gene_sequence),type="global-local")
   
   ##Check the alignment
-  #seq <- c(alignedPattern(d), alignedSubject(d))
+  #seq <- c(alignedSubject(d),alignedPattern(d))
   #DECIPHER::BrowseSeqs(seq)
   
   mmt=mismatchTable(d)
@@ -30,6 +30,7 @@ align_crispresso=function(x){
     ##INSERTION REF
     shift <- c(0L, head(cumsum(width(indT@insertion)[[1]]), n=-1L))
     ins_ranges <- shift(indT@insertion[[1]], shift)
+    end(ins_ranges)=ifelse(end(ins_ranges)>end(d@pattern@range),end(d@pattern@range),end(ins_ranges))
     ins_seqs <- extractAt(d@pattern@unaligned[[1]], ins_ranges)
     
     ins_seqs_dt=data.frame(ins_seqs@ranges)
@@ -55,6 +56,8 @@ align_crispresso=function(x){
       shift <- c(0L, head(cumsum(width(indT@deletion[[1]])), n=-1L))
       del_ranges <- shift(indT@deletion[[1]], shift)
       del_seqs <- extractAt(d@subject@unaligned[[1]], del_ranges)
+      #end(del_ranges)=ifelse(end(del_ranges)>end(d@subject@range),end(d@pattern@range),end(del_ranges))
+      
       del_ranges=data.frame(start=del_ranges@start-sum(ins$width),end=del_ranges@start-sum(ins$width)+del_ranges@width)
     
       
