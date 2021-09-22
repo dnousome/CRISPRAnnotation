@@ -101,4 +101,43 @@ allele_freq_tab=function(x){
   
 }
 
+aachange=function(POS,dt){
+  REFnt=sapply(POS-gene_coords$start+1,function(x)as.character(subseq(DNAString(gene_sequence),x,x)))
+  REFdt=data.frame(REF=REFnt,POS=POS) %>%
+    left_join(.,dt,by=c("REF",c("POS"="Start")))
+  newalt=ifelse(is.na(REFdt$ALT),REFdt$REF,REFdt$ALT)
+  newref=paste(REFnt,collapse="")
+  data.frame(REFnt=newref,ALTnt=paste(newalt,collapse=""),REF=as.character(translate(DNAString(newref))),ALT=as.character(translate(DNAString(paste(newalt,collapse="")))))
+}
 
+
+getGeneInfo=function(genename){
+##Load the Gene Name into the name space right away!
+if(file.exists(sprintf("%s_gene_coords.rds",genename)) & file.exists(sprintf("%s_gene_sequence.rds",genename))){
+  gene_coords=readRDS(sprintf("%s_gene_coords.rds",genename))
+  gene_sequence=readRDS(sprintf("%s_gene_sequence.rds",genename))
+  
+}else{
+  mart = useMart('ensembl', dataset="hsapiens_gene_ensembl")
+  #mart = useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl",host = "asia.ensembl.org")
+  
+  
+  my_attrs = c(gene="external_gene_name",chr="chromosome_name",start="start_position",
+               end="end_position",strand="strand",sequence="gene_exon_intron")
+  
+  gene_sequence_info = getBM(attributes = my_attrs,
+                             filters = "external_gene_name", 
+                             values = genename, mart = mart, verbose=T)
+  
+  
+  gene_sequence_info = gene_sequence_info[,match(my_attrs, colnames(gene_sequence_info))]
+  colnames(gene_sequence_info) = names(my_attrs)
+  
+  gene_coords = gene_sequence_info[gene_sequence_info$gene==genename, 
+                                   c("chr","start","end","strand")]
+  gene_sequence = gene_sequence_info$sequence[gene_sequence_info$gene==genename]
+  
+  saveRDS(gene_coords,sprintf("%s_gene_coords.rds",genename))
+  saveRDS(gene_sequence,sprintf("%s_gene_sequence.rds",genename))
+}
+}

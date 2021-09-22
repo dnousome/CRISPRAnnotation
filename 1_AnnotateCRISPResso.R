@@ -40,7 +40,6 @@ if (is.null(opt$inputpath)){
 
 
 #setwd=("~/Documents/projects/ccbr1046/combined_flowcells/")
-
 #batch_dir="~/Documents/projects/ccbr1046/combined_flowcells/CRISPRessoBatch_on_batch"
 
 file_dir=opt$inputpath
@@ -49,45 +48,14 @@ myfiles = list.files(path=file_dir, pattern = crispresso_file_name, recursive = 
 names(myfiles) = gsub("^CRISPResso_on_","",basename(dirname(myfiles)))
 
 
-##Load the Gene Name
-if(file.exists(sprintf("%s_gene_coords.rds",opt$gene)) & file.exists(sprintf("%s_gene_sequence.rds",opt$gene))){
-  gene_coords=readRDS(sprintf("%s_gene_coords.rds",opt$gene))
-  gene_sequence=readRDS(sprintf("%s_gene_sequence.rds",opt$gene))
-  
-  }else{
-mart = useMart('ensembl', dataset="hsapiens_gene_ensembl")
-#mart = useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl",host = "asia.ensembl.org")
-
-
-my_attrs = c(gene="external_gene_name",chr="chromosome_name",start="start_position",
-             end="end_position",strand="strand",sequence="gene_exon_intron")
-
-gene_sequence_info = getBM(attributes = my_attrs,
-                           filters = "external_gene_name", 
-                           values = opt$gene, mart = mart, verbose=T)
-
-
-gene_sequence_info = gene_sequence_info[,match(my_attrs, colnames(gene_sequence_info))]
-colnames(gene_sequence_info) = names(my_attrs)
-
-
-#colnames(gene_sequence_info)
-#nchar(gene_sequence_info$sequence)
-
-
-
-gene_coords = gene_sequence_info[gene_sequence_info$gene==opt$gene, 
-                                 c("chr","start","end","strand")]
-gene_sequence = gene_sequence_info$sequence[gene_sequence_info$gene==opt$gene]
-
-saveRDS(gene_coords,sprintf("%s_gene_coords.rds",opt$gene))
-saveRDS(gene_sequence,sprintf("%s_gene_sequence.rds",opt$gene))
-}
-
+##Load the Gene Name and all in the function listed
 ##Read in the data
 ##Source the functions
 #source("0_Functions.R")
 source("0_FXN_update.R")
+
+##Load gene
+getGeneInfo(opt$gene)
 
 out_tab<-lapply(myfiles,allele_freq_tab)
 
