@@ -73,13 +73,13 @@ align_crispresso=function(x){
     
   
   if(exists("vt_del") & exists("vt_ins")){
-    bind_rows(vt_del,vt_ins,vt_snp) %>% arrange(Start) #%>%  filter(Start>32363397 & End<32363533) 
+    bind_rows(vt_del,vt_ins,vt_snp) %>% arrange(Start) 
   }else if(exists("vt_ins")){
-    bind_rows(vt_ins,vt_snp) %>% arrange(Start) #%>%  filter(Start>32363397 & End<32363533) 
+    bind_rows(vt_ins,vt_snp) %>% arrange(Start) 
   }else if(exists("vt_del")){
-    bind_rows(vt_del,vt_snp) %>% arrange(Start) #%>%  filter(Start>32363397 & End<32363533) 
+    bind_rows(vt_del,vt_snp) %>% arrange(Start) 
   }else{
-    vt_snp %>% arrange(Start) #%>%  filter(Start>32363397 & End<32363533) 
+    vt_snp %>% arrange(Start)
   }
   
 }
@@ -87,20 +87,54 @@ align_crispresso=function(x){
 
 
 #PRocess ALLELEs frequency_table
-allele_freq_tab=function(x){
-  
-  mytable = read_tsv(unz(x,"Alleles_frequency_table.txt"))
+allele_freq_tab=function(file,file_ext){
   
   
+  ##Xlsx/txt will return list length 1
+  if(file_ext=="xlsx"){
+    sheets=readxl::excel_sheets(file)
+    
+    out_tab=lapply(sheets,function(x){
+      mytable=readxl::read_xlsx(file,sheet = x)
+      this <- mytable %>% 
+        dplyr::select(Aligned_Sequence,
+               Reference_Sequence,
+               n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`) %>%
+        filter(n_mutated > 0) 
+      split(this,1:nrow(this))
+   
+    })
+   names(out_tab)=sheets
+  return(out_tab)
+    
+  }else if(file_ext=="txt"){
+    mytable = read_tsv(x)
+    this <- mytable %>% 
+      dplyr::select(Aligned_Sequence,
+                    Reference_Sequence,
+                    n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`) %>%
+      filter(n_mutated > 0) 
+    out_tab=split(this,1:nrow(this))
+    return(out_tab)  
+    
+  }else {
   ##Filter on only those that have any number of mutations
-  this <- mytable %>% 
-    filter(n_mutated > 0) 
+    crispresso_file_name="Alleles_frequency_table.zip"
+    myfiles = list.files(path=file, pattern = crispresso_file_name, recursive = T, full.names = T)
+    names(myfiles) = gsub("^CRISPResso_on_","",basename(dirname(myfiles)))
+    
+    out_tab=lapply(myfiles,function(x){
+      mytable=read_tsv(unz(x,"Alleles_frequency_table.txt"))
+      this <- mytable %>% 
+        filter(n_mutated > 0) 
+      split(this,1:nrow(this))
+    })
+    names(out_tab)=names(myfiles)
   
-  that=split(this,1:nrow(this))
-
+    return(out_tab)  
   
 }
-
+}
 aachange=function(POS,dt){
   REFnt=sapply(POS-gene_coords$start+1,function(x)as.character(subseq(DNAString(gene_sequence),x,x)))
   REFdt=data.frame(REF=REFnt,POS=POS) %>%
@@ -114,10 +148,11 @@ aachange=function(POS,dt){
 getGeneInfo=function(genename){
 ##Load the Gene Name into the name space right away!
 if(file.exists(sprintf("%s_gene_coords.rds",genename)) & file.exists(sprintf("%s_gene_sequence.rds",genename))){
-  gene_coords=readRDS(sprintf("%s_gene_coords.rds",genename))
-  gene_sequence=readRDS(sprintf("%s_gene_sequence.rds",genename))
+
+  assign('gene_coords',readRDS(sprintf("%s_gene_coords.rds",genename)),envir =globalenv())
+  assign('gene_sequence',readRDS(sprintf("%s_gene_sequence.rds",genename)),envir = globalenv())
   
-}else{
+  }else{
   mart = useMart('ensembl', dataset="hsapiens_gene_ensembl")
   #mart = useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl",host = "asia.ensembl.org")
   
@@ -139,5 +174,9 @@ if(file.exists(sprintf("%s_gene_coords.rds",genename)) & file.exists(sprintf("%s
   
   saveRDS(gene_coords,sprintf("%s_gene_coords.rds",genename))
   saveRDS(gene_sequence,sprintf("%s_gene_sequence.rds",genename))
+  
+  assign('gene_coords',readRDS(sprintf("%s_gene_coords.rds",genename)),envir =globalenv())
+  assign('gene_sequence',readRDS(sprintf("%s_gene_sequence.rds",genename)),envir = globalenv())
+  
 }
 }
