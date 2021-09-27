@@ -1,4 +1,5 @@
-########All Suppor Functions
+########All Support Functions
+
 #Process Allele frequency_table--Output as a dataframe with only the Aligned Sequences
 allele_freq_tab=function(file,file_ext){
   
@@ -41,6 +42,7 @@ allele_freq_tab=function(file,file_ext){
         dplyr::select(Aligned_Sequence,
                       Reference_Sequence,
                       n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`) %>%
+
       filter(n_mutated > 0) 
       #split(this,1:nrow(this))
     })
