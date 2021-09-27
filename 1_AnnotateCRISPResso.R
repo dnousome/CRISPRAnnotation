@@ -167,11 +167,15 @@ vt_file=readRDS(sprintf("vt_full_%s.rds",opt$out))
 
 lapply(1:length(af_file),function(i){
   title= names(af_file)[i]
-  pamsites=unlist(strsplit(as.character(opt$pamsite),","))
-  pamsitesalt=unlist(strsplit(as.character(opt$pamsiteallele),","))
-  
+
   startrange=as.numeric(opt$start)
   endrange=as.numeric(opt$end)
+  
+  ##Option for PAMSITE
+  if (!is.null(opt$pamsite)){
+    pamsites=unlist(strsplit(as.character(opt$pamsite),","))
+    pamsitesalt=unlist(strsplit(as.character(opt$pamsiteallele),","))
+  }
   
   newdt=left_join(af_file[[i]],vt_file[[i]],by="af.id") %>%
     mutate(Biallelic=case_when(
