@@ -1,6 +1,61 @@
-align_crispresso=function(x){
-  d=pairwiseAlignment(DNAString(x$Aligned_Sequence),DNAString(gene_sequence),type="global-local")
+
+#Process Allele frequency_table--Output as a dataframe with only the Aligned Sequences
+allele_freq_tab=function(file,file_ext){
   
+  ##Xlsx/txt will return list length 1
+  if(file_ext=="xlsx"){
+    sheets=readxl::excel_sheets(file)
+    
+    out_tab=lapply(sheets,function(x){
+      mytable=readxl::read_xlsx(file,sheet = x)
+      this <- mytable %>% 
+        dplyr::select(Aligned_Sequence,
+                      Reference_Sequence,
+                      n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`) %>%
+        filter(n_mutated > 0) 
+      split(this,1:nrow(this))
+      
+    })
+    names(out_tab)=sheets
+    return(out_tab)
+    
+  }else if(file_ext=="txt"){
+    mytable = read_tsv(x)
+    this <- mytable %>% 
+      dplyr::select(Aligned_Sequence,
+                    Reference_Sequence,
+                    n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`) %>%
+      filter(n_mutated > 0) 
+   # out_tab=split(this,1:nrow(this))
+    return(out_tab)  
+    
+  }else {
+    ##Filter on only those that have any number of mutations
+    crispresso_file_name="Alleles_frequency_table.zip"
+    myfiles = list.files(path=file, pattern = crispresso_file_name, recursive = T, full.names = T)
+    names(myfiles) = gsub("^CRISPResso_on_","",basename(dirname(myfiles)))
+    
+    out_tab=lapply(myfiles,function(x){
+      mytable=read_tsv(unz(x,"Alleles_frequency_table.txt"))
+      this <- mytable %>% 
+        dplyr::select(Aligned_Sequence,
+                      Reference_Sequence,
+                      n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`)
+      filter(n_mutated > 0) 
+      #split(this,1:nrow(this))
+    })
+   names(out_tab)=names(myfiles)
+    
+  return(out_tab)  
+    
+  }
+}
+
+align_crispresso_p1=function(x){
+  d=pairwiseAlignment(DNAString(x$Aligned_Sequence),DNAString(gene_sequence),type="global-local")
+}
+
+align_crispresso_p2=function(d){
   ##Check the alignment
   #seq <- c(alignedSubject(d),alignedPattern(d))
   #DECIPHER::BrowseSeqs(seq)
@@ -86,55 +141,6 @@ align_crispresso=function(x){
   
 
 
-#PRocess ALLELEs frequency_table
-allele_freq_tab=function(file,file_ext){
-  
-  
-  ##Xlsx/txt will return list length 1
-  if(file_ext=="xlsx"){
-    sheets=readxl::excel_sheets(file)
-    
-    out_tab=lapply(sheets,function(x){
-      mytable=readxl::read_xlsx(file,sheet = x)
-      this <- mytable %>% 
-        dplyr::select(Aligned_Sequence,
-               Reference_Sequence,
-               n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`) %>%
-        filter(n_mutated > 0) 
-      split(this,1:nrow(this))
-   
-    })
-   names(out_tab)=sheets
-  return(out_tab)
-    
-  }else if(file_ext=="txt"){
-    mytable = read_tsv(x)
-    this <- mytable %>% 
-      dplyr::select(Aligned_Sequence,
-                    Reference_Sequence,
-                    n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`) %>%
-      filter(n_mutated > 0) 
-    out_tab=split(this,1:nrow(this))
-    return(out_tab)  
-    
-  }else {
-  ##Filter on only those that have any number of mutations
-    crispresso_file_name="Alleles_frequency_table.zip"
-    myfiles = list.files(path=file, pattern = crispresso_file_name, recursive = T, full.names = T)
-    names(myfiles) = gsub("^CRISPResso_on_","",basename(dirname(myfiles)))
-    
-    out_tab=lapply(myfiles,function(x){
-      mytable=read_tsv(unz(x,"Alleles_frequency_table.txt"))
-      this <- mytable %>% 
-        filter(n_mutated > 0) 
-      split(this,1:nrow(this))
-    })
-    names(out_tab)=names(myfiles)
-  
-    return(out_tab)  
-  
-}
-}
 aachange=function(POS,dt){
   REFnt=sapply(POS-gene_coords$start+1,function(x)as.character(subseq(DNAString(gene_sequence),x,x)))
   REFdt=data.frame(REF=REFnt,POS=POS) %>%
@@ -143,7 +149,6 @@ aachange=function(POS,dt){
   newref=paste(REFnt,collapse="")
   data.frame(REFnt=newref,ALTnt=paste(newalt,collapse=""),REF=as.character(translate(DNAString(newref))),ALT=as.character(translate(DNAString(paste(newalt,collapse="")))))
 }
-
 
 getGeneInfo=function(genename){
 ##Load the Gene Name into the name space right away!
