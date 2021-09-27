@@ -54,20 +54,20 @@ allele_freq_tab=function(file,file_ext){
 }
 
 align_crispresso_p1=function(x){
-  pairwiseAlignment(DNAString(x$Aligned_Sequence),DNAString(gene_sequence),type="global-local")
+  pairwiseAlignment(DNAString(x),DNAString(gene_sequence),type="global-local")
 }
 
-align_crispresso_p2=function(d){
+align_crispresso_p2=function(alignment,dt){
   ##Check the alignment
   #seq <- c(alignedSubject(d),alignedPattern(d))
   #DECIPHER::BrowseSeqs(seq)
   
-  mmt=mismatchTable(d)
+  mmt=mismatchTable(alignment)
   
   
   
   ##INDELS FIRST TO ADD TO TABLE
-  indT=indel(d)
+  indT=indel(alignment)
 
   ins=data.frame(indT@insertion@unlistData)
   del=data.frame(indT@deletion@unlistData)
@@ -77,9 +77,9 @@ align_crispresso_p2=function(d){
   vt_snp=tibble(chr=gene_coords$chr,Start=gene_coords$start+mmt$SubjectStart-1,
                 End=gene_coords$start+mmt$SubjectEnd-1,
                 REF=mmt$SubjectSubstring,ALT=mmt$PatternSubstring,
-                Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence,
-                n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
-                Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
+                Aligned=dt$Aligned_Sequence,Reference=dt$Reference_Sequence,
+                n_deleted=dt$n_deleted,n_inserted=dt$n_inserted,n_mutated=dt$n_mutated,
+                Reads_n=dt$`#Reads`,Reads_prop=dt$`%Reads`)
   
   
   if(nrow(ins)>0){
@@ -87,8 +87,8 @@ align_crispresso_p2=function(d){
     ##INSERTION REF
     shift <- c(0L, head(cumsum(width(indT@insertion)[[1]]), n=-1L))
     ins_ranges <- shift(indT@insertion[[1]], shift)
-    end(ins_ranges)=ifelse(end(ins_ranges)>end(d@pattern@range),end(d@pattern@range),end(ins_ranges))
-    ins_seqs <- extractAt(d@pattern@unaligned[[1]], ins_ranges)
+    end(ins_ranges)=ifelse(end(ins_ranges)>end(alignment@pattern@range),end(alignment@pattern@range),end(ins_ranges))
+    ins_seqs <- extractAt(alignment@pattern@unaligned[[1]], ins_ranges)
     
     ins_seqs_dt=data.frame(ins_seqs@ranges)
 
@@ -97,12 +97,12 @@ align_crispresso_p2=function(d){
     
     
     vt_ins=tibble(chr=gene_coords$chr,
-                  Start=(gene_coords$start+d@subject@range@start+ins$start)-3,
-                  End=gene_coords$start+ins$start+d@subject@range@start+ins$width-3,
+                  Start=(gene_coords$start+alignment@subject@range@start+ins$start)-3,
+                  End=gene_coords$start+ins$start+alignment@subject@range@start+ins$width-3,
                   REF="-",ALT=ins_alt$ins_seqs,
-                  Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence,
-                  n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
-                  Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
+                  Aligned=dt$Aligned_Sequence,Reference=dt$Reference_Sequence,
+                  n_deleted=dt$n_deleted,n_inserted=dt$n_inserted,n_mutated=dt$n_mutated,
+                  Reads_n=dt$`#Reads`,Reads_prop=dt$`%Reads`)
     
     
   }
@@ -112,19 +112,19 @@ align_crispresso_p2=function(d){
       
       shift <- c(0L, head(cumsum(width(indT@deletion[[1]])), n=-1L))
       del_ranges <- shift(indT@deletion[[1]], shift)
-      del_seqs <- extractAt(d@subject@unaligned[[1]], del_ranges)
+      del_seqs <- extractAt(alignment@subject@unaligned[[1]], del_ranges)
       #end(del_ranges)=ifelse(end(del_ranges)>end(d@subject@range),end(d@pattern@range),end(del_ranges))
       
       del_ranges=data.frame(start=del_ranges@start-sum(ins$width),end=del_ranges@start-sum(ins$width)+del_ranges@width)
     
       
       vt_del=tibble(chr=gene_coords$chr,
-                    Start=(gene_coords$start+d@subject@range@start+del_ranges$start)-2,
-                    End=(gene_coords$start+d@subject@range@start+del_ranges$end)-2,
+                    Start=(gene_coords$start+alignment@subject@range@start+del_ranges$start)-2,
+                    End=(gene_coords$start+alignment@subject@range@start+del_ranges$end)-2,
                     REF=data.frame(del_seqs)$del_seqs,ALT="-",
-                    Aligned=x$Aligned_Sequence,Reference=x$Reference_Sequence,
-                    n_deleted=x$n_deleted,n_inserted=x$n_inserted,n_mutated=x$n_mutated,
-                    Reads_n=x$`#Reads`,Reads_prop=x$`%Reads`)
+                    Aligned=dt$Aligned_Sequence,Reference=dt$Reference_Sequence,
+                    n_deleted=dt$n_deleted,n_inserted=dt$n_inserted,n_mutated=dt$n_mutated,
+                    Reads_n=dt$`#Reads`,Reads_prop=dt$`%Reads`)
       
       }
     

@@ -69,14 +69,105 @@ if (is.na(numCores)){
 }
 
 
-
+##Prepare empty lists
+out_temp=list()
 out=list()
+
+
+
 for (i in 1:length(out_tab)){
-  #out[[i]] <- mclapply(out_tab[[i]][1:20], align_crispresso, mc.cores = numCores)
-  out[[i]] <- mclapply(out_tab[[i]], align_crispresso_p1, mc.cores = numCores)
-}
+  out_temp[[i]] <- mclapply(out_tab[[i]]$Aligned_Sequence, align_crispresso_p1, mc.cores = numCores)
+  
+  out[[i]] <- mcmapply(function(x,y){
+    align_crispresso_p2(alignment=x,dt=y)
+    }, out_temp[[i]],split(out_tab[[i]],1:nrow(out_tab[[i]])),mc.cores = numCores,SIMPLIFY = F)
+  
+  }
+
+
+
+
 
 
 names(out)=names(out_tab)
 ##Save output temporarily 
 saveRDS(out,sprintf("temp_%s.rds",opt$out))
+
+
+
+
+##For annovar Keep on the REF/ALT
+vt=lapply(out,function(x){
+  bind_rows(x) %>% arrange(Start) %>% distinct() 
+})
+
+vt_annovar=lapply(out,function(x){
+  bind_rows(x) %>% arrange(Start) %>%  dplyr::select(chr,Start,End,REF,ALT) %>%
+    distinct() 
+  
+})
+
+##Load this VT_annovar object into ANNOVAR
+lapply(names(vt_annovar),function(x){
+  write_tsv(vt_annovar[[x]],paste0(x,"_toanno.avinput"),col_names = F)
+})
+
+
+
+###Run ANNOVAR output
+##Use 2_runanno.sh
+avin=paste0(names(out),"_toanno.avinput")
+system("chmod 755 2_runannovar.sh")
+lapply(avin,function(x)system(sprintf("./2_runannovar.sh --annovarin %s",x)))
+
+
+
+#####Parse after output
+annos=paste0("annovar/",names(out),".hg38_multianno.txt")
+#annos=annos[order(sapply(strsplit(annos,"[/_]"),'[',2))]
+#annos=annos[order(match(names(myfiles),names(out)))]
+
+
+##Prep for Table output
+afch=lapply(out,function(x){
+  s=lapply(x,function(y)y[1,])
+  bind_rows(s) %>% 
+    dplyr::select(Aligned,Reference,n_deleted,n_inserted,n_mutated,Reads_n,Reads_prop) %>%
+    mutate(af.id=1:nrow(.)) %>%
+    #mutate(Reference=)
+    dplyr::select(af.id,everything())
+})
+
+
+vt_full=mapply(function(x,y){
+  anno_in=read_tsv(y,guess_max=20000)  %>%
+    distinct() %>%
+    dplyr::select(Chr,Start,End,Ref,Alt,Func.refGene,Gene.refGene,AAChange.refGene,
+                  gnomad=`AF...132`,gnomad_non_topmed=non_topmed_AF_popmax,
+                  gnomad_female=`AF_female...135`,gnomad_noncancer=non_cancer_AF_popmax,
+                  SIFT_score,Polyphen2_HDIV_score,
+                  Polyphen2_HVAR_score,CADD_raw=`CADD_raw...105`,phyloP30way_mammalian,
+                  CLNSIG)
+  
+  names(x)=1:length(x)
+  fin_dt=lapply(names(x),function(x1){
+    if(!is.null(x[[x1]])){
+      x[[x1]] %>% 
+        mutate(af.id=as.numeric(x1)) 
+    }
+  })
+  bind_rows(fin_dt) %>% 
+    left_join(.,anno_in,by=c('chr'="Chr",'Start','End','REF'="Ref",'ALT'="Alt")) %>%
+    dplyr::select(-Aligned,-Reference,-n_deleted,-n_inserted,-n_mutated,-Reads_n,-Reads_prop) %>%
+    relocate(af.id,.after=last_col())
+  
+  
+},out,annos,SIMPLIFY = F)
+
+saveRDS(afch,sprintf("afch_%s.rds",opt$out))
+saveRDS(vt_full,sprintf("vt_full_%s.rds",opt$out))
+
+
+af_file=readRDS(sprintf("afch_%s.rds",opt$out))
+vt_file=readRDS(sprintf("vt_full_%s.rds",opt$out))
+
