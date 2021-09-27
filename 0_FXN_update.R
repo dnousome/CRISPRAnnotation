@@ -1,4 +1,4 @@
-
+########All Suppor Functions
 #Process Allele frequency_table--Output as a dataframe with only the Aligned Sequences
 allele_freq_tab=function(file,file_ext){
   
