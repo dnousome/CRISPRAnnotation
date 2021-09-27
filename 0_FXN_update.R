@@ -54,7 +54,7 @@ allele_freq_tab=function(file,file_ext){
 }
 
 align_crispresso_p1=function(x){
-  d=pairwiseAlignment(DNAString(x$Aligned_Sequence),DNAString(gene_sequence),type="global-local")
+  pairwiseAlignment(DNAString(x$Aligned_Sequence),DNAString(gene_sequence),type="global-local")
 }
 
 align_crispresso_p2=function(d){
