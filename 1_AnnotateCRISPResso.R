@@ -168,6 +168,4 @@ saveRDS(afch,sprintf("afch_%s.rds",opt$out))
 saveRDS(vt_full,sprintf("vt_full_%s.rds",opt$out))
 
 
-af_file=readRDS(sprintf("afch_%s.rds",opt$out))
-vt_file=readRDS(sprintf("vt_full_%s.rds",opt$out))
 

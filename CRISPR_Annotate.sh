@@ -67,6 +67,6 @@ subdate=$(date +%F_%H%M%S)
 echo -e "#!/usr/bin/bash\nmodule load R/4.1\nRscript 1_AnnotateCRISPResso.R -i $CRISPPath -g $GENE -s $START -e $END -p $PAMSITE -a $PAMSITEALLELE -o $OUTPUT"> $SUBMIT_SCRIPT
 echo "Submitting pipeline to cluster... "
 
-primaryID=$(sbatch --cpus-per-task=24 --mem=64g --time 48:00:00 --partition norm --output submit_"$subdate".log --error error_"$subdate".log $SUBMIT_SCRIPT)
+primaryID=$(sbatch --cpus-per-task=16 --mem=70g --time 48:00:00 --partition norm --output submit_"$subdate".log --error error_"$subdate".log $SUBMIT_SCRIPT)
 #primaryID=$(sbatch --cpus-per-task=2 --mem=20g --time 5-00:00:00 --partition ccr,norm --output submit.log --error submit.log $SUBMIT_SCRIPT)
 echo "Primary Job ID: $primaryID"
