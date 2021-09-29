@@ -8,6 +8,8 @@ library(Biostrings)
 library(GenomicRanges)
 library(httr)
 library(parallel)
+library(rslurm)
+
 
 set_config(config(ssl_verifypeer = 0L))
 
@@ -70,19 +72,23 @@ if (is.na(numCores)){
 
 
 ##Prepare empty lists
-out_temp=list()
 out=list()
 
 
 
 for (i in 1:length(out_tab)){
-  out_temp[[i]] <- mclapply(out_tab[[i]]$Aligned_Sequence, align_crispresso_p1, mc.cores = numCores)
+  #out_temp[[i]] <- mclapply(out_tab[[i]]$Aligned_Sequence, align_crispresso_p1, mc.cores = numCores)
   
-  out[[i]] <- mcmapply(function(x,y){
-    align_crispresso_p2(alignment=x,dt=y)
-    }, out_temp[[i]],split(out_tab[[i]],1:nrow(out_tab[[i]])),mc.cores = numCores,SIMPLIFY = F)
+  sopt1 <- list(time = '08:00:00',mem='16g')
+  sjob <- slurm_apply(align_crispresso, out_tab[[i]], jobname = sprintf("%s_slurm",opt$out),
+                      nodes = 12, cpus_per_node = 8, slurm_options=sopt1,global_objects = c("gene_sequence","gene_coords"),
+                      submit = TRUE)
+  out[[i]] <- get_slurm_out(sjob, outtype = 'raw', wait = TRUE)
   
-  }
+  
+}
+
+  
 
 
 

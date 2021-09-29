@@ -12,7 +12,7 @@ allele_freq_tab=function(file,file_ext){
       this <- mytable %>% 
         dplyr::select(Aligned_Sequence,
                       Reference_Sequence,
-                      n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`) %>%
+                      n_deleted,n_inserted,n_mutated,Reads_n=`#Reads`,Reads_prop=`%Reads`) %>%
         filter(n_mutated > 0) 
       split(this,1:nrow(this))
       
@@ -25,7 +25,7 @@ allele_freq_tab=function(file,file_ext){
     this <- mytable %>% 
       dplyr::select(Aligned_Sequence,
                     Reference_Sequence,
-                    n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`) %>%
+                    n_deleted,n_inserted,n_mutated,Reads_n=`#Reads`,Reads_prop=`%Reads`) %>%
       filter(n_mutated > 0) 
    # out_tab=split(this,1:nrow(this))
     return(out_tab)  
@@ -41,7 +41,7 @@ allele_freq_tab=function(file,file_ext){
       this <- mytable %>% 
         dplyr::select(Aligned_Sequence,
                       Reference_Sequence,
-                      n_deleted,n_inserted,n_mutated,`#Reads`,`%Reads`) %>%
+                      n_deleted,n_inserted,n_mutated,Reads_n=`#Reads`,Reads_prop=`%Reads`) %>%
 
       filter(n_mutated > 0) 
       #split(this,1:nrow(this))
@@ -53,14 +53,11 @@ allele_freq_tab=function(file,file_ext){
   }
 }
 
-align_crispresso_p1=function(x){
-  pairwiseAlignment(DNAString(x),DNAString(gene_sequence),type="global-local")
-}
 
-align_crispresso_p2=function(alignment,dt){
-  ##Check the alignment
-  #seq <- c(alignedSubject(d),alignedPattern(d))
-  #DECIPHER::BrowseSeqs(seq)
+align_crispresso=function(Aligned_Sequence,Reference_Sequence,n_deleted,n_inserted,n_mutated,Reads_n,Reads_prop){
+  
+  ##Run Alignment
+  alignment=pairwiseAlignment(DNAString(Aligned_Sequence),DNAString(gene_sequence),type="global-local")
   
   mmt=mismatchTable(alignment)
   
@@ -68,18 +65,18 @@ align_crispresso_p2=function(alignment,dt){
   
   ##INDELS FIRST TO ADD TO TABLE
   indT=indel(alignment)
-
+  
   ins=data.frame(indT@insertion@unlistData)
   del=data.frame(indT@deletion@unlistData)
   
- 
+  
   
   vt_snp=tibble(chr=gene_coords$chr,Start=gene_coords$start+mmt$SubjectStart-1,
                 End=gene_coords$start+mmt$SubjectEnd-1,
                 REF=mmt$SubjectSubstring,ALT=mmt$PatternSubstring,
-                Aligned=dt$Aligned_Sequence,Reference=dt$Reference_Sequence,
-                n_deleted=dt$n_deleted,n_inserted=dt$n_inserted,n_mutated=dt$n_mutated,
-                Reads_n=dt$`#Reads`,Reads_prop=dt$`%Reads`)
+                Aligned=Aligned_Sequence,Reference=Reference_Sequence,
+                n_deleted=n_deleted,n_inserted=n_inserted,n_mutated=n_mutated,
+                Reads_n=Reads_n,Reads_prop=Reads_prop)
   
   
   if(nrow(ins)>0){
@@ -91,43 +88,43 @@ align_crispresso_p2=function(alignment,dt){
     ins_seqs <- extractAt(alignment@pattern@unaligned[[1]], ins_ranges)
     
     ins_seqs_dt=data.frame(ins_seqs@ranges)
-
+    
     ins_alt=data.frame(ins_seqs)
-
+    
     
     
     vt_ins=tibble(chr=gene_coords$chr,
                   Start=(gene_coords$start+alignment@subject@range@start+ins$start)-3,
                   End=gene_coords$start+ins$start+alignment@subject@range@start+ins$width-3,
                   REF="-",ALT=ins_alt$ins_seqs,
-                  Aligned=dt$Aligned_Sequence,Reference=dt$Reference_Sequence,
-                  n_deleted=dt$n_deleted,n_inserted=dt$n_inserted,n_mutated=dt$n_mutated,
-                  Reads_n=dt$`#Reads`,Reads_prop=dt$`%Reads`)
+                  Aligned=Aligned_Sequence,Reference=Reference_Sequence,
+                  n_deleted=n_deleted,n_inserted=n_inserted,n_mutated=n_mutated,
+                  Reads_n=Reads_n,Reads_prop=Reads_prop)
     
     
   }
   
   if(nrow(del)>0){
-      
-      
-      shift <- c(0L, head(cumsum(width(indT@deletion[[1]])), n=-1L))
-      del_ranges <- shift(indT@deletion[[1]], shift)
-      del_seqs <- extractAt(alignment@subject@unaligned[[1]], del_ranges)
-      #end(del_ranges)=ifelse(end(del_ranges)>end(d@subject@range),end(d@pattern@range),end(del_ranges))
-      
-      del_ranges=data.frame(start=del_ranges@start-sum(ins$width),end=del_ranges@start-sum(ins$width)+del_ranges@width)
     
-      
-      vt_del=tibble(chr=gene_coords$chr,
-                    Start=(gene_coords$start+alignment@subject@range@start+del_ranges$start)-2,
-                    End=(gene_coords$start+alignment@subject@range@start+del_ranges$end)-2,
-                    REF=data.frame(del_seqs)$del_seqs,ALT="-",
-                    Aligned=dt$Aligned_Sequence,Reference=dt$Reference_Sequence,
-                    n_deleted=dt$n_deleted,n_inserted=dt$n_inserted,n_mutated=dt$n_mutated,
-                    Reads_n=dt$`#Reads`,Reads_prop=dt$`%Reads`)
-      
-      }
     
+    shift <- c(0L, head(cumsum(width(indT@deletion[[1]])), n=-1L))
+    del_ranges <- shift(indT@deletion[[1]], shift)
+    del_seqs <- extractAt(alignment@subject@unaligned[[1]], del_ranges)
+    #end(del_ranges)=ifelse(end(del_ranges)>end(d@subject@range),end(d@pattern@range),end(del_ranges))
+    
+    del_ranges=data.frame(start=del_ranges@start-sum(ins$width),end=del_ranges@start-sum(ins$width)+del_ranges@width)
+    
+    
+    vt_del=tibble(chr=gene_coords$chr,
+                  Start=(gene_coords$start+alignment@subject@range@start+del_ranges$start)-2,
+                  End=(gene_coords$start+alignment@subject@range@start+del_ranges$end)-2,
+                  REF=data.frame(del_seqs)$del_seqs,ALT="-",
+                  Aligned=Aligned_Sequence,Reference=Reference_Sequence,
+                  n_deleted=n_deleted,n_inserted=n_inserted,n_mutated=n_mutated,
+                  Reads_n=Reads_n,Reads_prop=Reads_prop)
+    
+  }
+  
   
   if(exists("vt_del") & exists("vt_ins")){
     bind_rows(vt_del,vt_ins,vt_snp) %>% arrange(Start) 
@@ -140,6 +137,8 @@ align_crispresso_p2=function(alignment,dt){
   }
   
 }
+
+
   
 
 
