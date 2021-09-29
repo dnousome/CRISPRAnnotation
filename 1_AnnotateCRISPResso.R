@@ -81,7 +81,7 @@ for (i in 1:length(out_tab)){
   
   sopt1 <- list(time = '08:00:00',mem='24g')
   sjob <- slurm_apply(align_crispresso, out_tab[[i]], jobname = sprintf("%s_slurm",opt$out),
-                      nodes = 12, cpus_per_node = 8, slurm_options=sopt1,global_objects = c("gene_sequence","gene_coords"),
+                      nodes = 12, cpus_per_node = 6, slurm_options=sopt1,global_objects = c("gene_sequence","gene_coords"),
                       submit = TRUE)
   out[[i]] <- get_slurm_out(sjob, outtype = 'raw', wait = TRUE)
   
