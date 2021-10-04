@@ -203,3 +203,17 @@ if(file.exists(sprintf("%s_gene_coords.rds",genename)) & file.exists(sprintf("%s
   
 }
 }
+
+##Return AA annotation
+return_AA_anno=function(split_dataframe,positions){
+  lapply(split_dataframe,function(x){
+    POS=positions
+    AA1_change=aachange(POS,dt=x)
+    regex=paste0(gene_coords$chr[1],":",POS[1],"-",POS[3])
+    tempa=t1 %>% filter(X2 %in% regex) %>% dplyr::select(X3,REF_AA,ALT_AA,SIFT,Polyphen,CADD)
+    
+    data.frame(af.id=x$af.id[1],AA1_change) %>% left_join(.,tempa,by=c('REF'='REF_AA','ALT'="ALT_AA",'ALTnt'="X3"))%>%
+      dplyr::rename(REF_AA=REF,ALT_AA=ALT,SIFT_AA=SIFT,Polyphen_AA=Polyphen,CADD_AA=CADD)
+  })
+}
+
