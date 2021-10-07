@@ -14,7 +14,7 @@ allele_freq_tab=function(file,file_ext){
                       Reference_Sequence,
                       n_deleted,n_inserted,n_mutated,Reads_n=`#Reads`,Reads_prop=`%Reads`) %>%
         filter(n_mutated > 0) 
-      split(this,1:nrow(this))
+     # split(this,1:nrow(this))
       
     })
     names(out_tab)=sheets
@@ -28,7 +28,7 @@ allele_freq_tab=function(file,file_ext){
                     n_deleted,n_inserted,n_mutated,Reads_n=`#Reads`,Reads_prop=`%Reads`) %>%
       filter(n_mutated > 0) 
    # out_tab=split(this,1:nrow(this))
-    return(out_tab)  
+    return(mytable)  
     
   }else {
     ##Filter on only those that have any number of mutations
