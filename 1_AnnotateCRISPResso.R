@@ -97,6 +97,11 @@ names(out)=names(out_tab)
 saveRDS(out,sprintf("temp_%s.rds",opt$out))
 
 
+##Remove any NULL reads that map
+out=lapply(out,function(x){
+  x[lengths(x)!=1]
+})
+
 
 
 ##For annovar Keep on the REF/ALT
@@ -152,13 +157,8 @@ vt_full=mapply(function(x,y){
                   Polyphen2_HVAR_score,CADD_raw=`CADD_raw...105`,phyloP30way_mammalian,
                   CLNSIG)
   
-  names(x)=1:length(x)
-  fin_dt=lapply(names(x),function(x1){
-    if(!is.null(x[[x1]])){
-      x[[x1]] %>% 
-        mutate(af.id=as.numeric(x1)) 
-    }
-  })
+  fin_dt <- Map(cbind,x, af.id = (1:length(x)))
+  
   bind_rows(fin_dt) %>% 
     left_join(.,anno_in,by=c('chr'="Chr",'Start','End','REF'="Ref",'ALT'="Alt")) %>%
     dplyr::select(-Aligned,-Reference,-n_deleted,-n_inserted,-n_mutated,-Reads_n,-Reads_prop) %>%

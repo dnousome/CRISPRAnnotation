@@ -12,8 +12,15 @@ usage: CRISPR_Annotate.sh [-h]
 
 arguments:
   --help                show this help message and exit
-  --path/-p PATH              [input_params] Path to directory containing all Alleles_Frequency_Table.zip files
-  --gene/-g Gene              [input_params] Gene of Interest to grab coordinates (works only with 1 at a time)
+  --input/-i INPUTPATH             [input_params] Path to directory containing all Alleles_Frequency_Table.zip files
+  --gene/-g Gene             [input_params] Gene of Interest to grab coordinates (works only with 1 at a time)
+  --start/-s Start            [input_params] Start site
+  --end/-e Start              [input_params] End site
+  --PAM/-p Pam                [input_params] PAM site
+  --allele/-e Pam Allale      [input_params] PAM allele
+  --output/-o Output          [input_params] Output
+
+
 ```
 Example
 ```
