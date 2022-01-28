@@ -1,14 +1,7 @@
 #!/usr/bin/env Rscript
 ###CRISPRESSO Alignment Project
 ###By Darryl Nousome
-library(optparse)
-library(tidyverse)
-library(biomaRt)
-library(Biostrings)
-library(GenomicRanges)
-library(httr)
-library(parallel)
-library(rslurm)
+pacman::p_load(optparse,tidyverse,biomaRt,Biostrings,GenomicRanges,httr,parallel,rslurm)
 
 
 set_config(config(ssl_verifypeer = 0L))
