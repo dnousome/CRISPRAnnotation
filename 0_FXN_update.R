@@ -39,10 +39,9 @@ allele_freq_tab=function(file,file_ext){
     names(myfiles) = gsub("^CRISPResso_on_","",basename(dirname(myfiles)))
     
     if(file.info(myfiles)$size>50000000){
-      system(sprintf("unzip -o %s",myfiles))
-      myfiles=myfiles.txt  
-      out_tab=lapply(myfiles,function(x){
-        mytable=read_tsv(myfiles)
+      system(sprintf("unzip -o %s -d %s",myfiles,dirname(myfiles)))
+      out_tab=lapply(myfiles.txt,function(x){
+        mytable=vroom::vroom(x)
         this <- mytable %>% 
           dplyr::select(Aligned_Sequence,
                         Reference_Sequence,
@@ -54,7 +53,7 @@ allele_freq_tab=function(file,file_ext){
     }else{
     
     out_tab=lapply(myfiles,function(x){
-      mytable=read_tsv(unz(myfiles,"Alleles_frequency_table.txt"))
+      mytable=vroom::vroom(unz(x,"Alleles_frequency_table.txt"))
       this <- mytable %>% 
         dplyr::select(Aligned_Sequence,
                       Reference_Sequence,
