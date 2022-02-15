@@ -33,18 +33,24 @@ allele_freq_tab=function(file,file_ext){
   }else {
     ##Filter on only those that have any number of mutations
     crispresso_file_name="Alleles_frequency_table.zip"
+    
     myfiles = list.files(path=file, pattern = crispresso_file_name, recursive = T, full.names = T)
+    myfiles.txt=sub(".zip",".txt",myfiles)
     names(myfiles) = gsub("^CRISPResso_on_","",basename(dirname(myfiles)))
     
+    if(file.info(myfiles)$size>100000000){
+      system(sprintf("unzip -o %s",myfiles))
+      myfiles=myfiles.txt    
+      }
+    
     out_tab=lapply(myfiles,function(x){
-      mytable=read_tsv(unz(x,"Alleles_frequency_table.txt"))
+      mytable=vroom::vroom(myfiles)
       this <- mytable %>% 
         dplyr::select(Aligned_Sequence,
                       Reference_Sequence,
                       n_deleted,n_inserted,n_mutated,Reads_n=`#Reads`,Reads_prop=`%Reads`) %>%
 
       filter(n_mutated > 0) 
-      #split(this,1:nrow(this))
     })
    names(out_tab)=names(myfiles)
     
