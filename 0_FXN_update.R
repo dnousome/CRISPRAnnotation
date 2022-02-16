@@ -21,7 +21,7 @@ allele_freq_tab=function(file,file_ext){
     return(out_tab)
     
   }else if(file_ext=="txt"){
-    mytable = read_tsv(x)
+    mytable = vroom::vroom(x)
     this <- mytable %>% 
       dplyr::select(Aligned_Sequence,
                     Reference_Sequence,
