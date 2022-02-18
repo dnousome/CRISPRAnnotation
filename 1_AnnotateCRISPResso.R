@@ -50,7 +50,9 @@ source("0_FXN_update.R")
 getGeneInfo(opt$gene)
 
 ##Get File Extension
-ext=tail(unlist(strsplit(grep("Alleles_frequency_table",list.files(opt$input),value=T),"\\.")),n=1)
+ext=unlist(strsplit(grep("Alleles_frequency_table[.]",list.files(opt$input),value=T),"\\."))
+ext=ifelse(any(grepl("zip",ext)),"zip",
+           ifelse(any(grepl("txt",ext)),"txt",NA))
 
 ##
 out_tab=allele_freq_tab(opt$input,file_ext = ext)    
