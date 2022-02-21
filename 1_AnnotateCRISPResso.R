@@ -74,7 +74,7 @@ sjob=list()
 for (i in 1:length(out_tab)){
   #out_temp[[i]] <- mclapply(out_tab[[i]]$Aligned_Sequence, align_crispresso_p1, mc.cores = numCores)
   
-  sopt1 <- list(time = '08:00:00',mem='32g')
+  sopt1 <- list(time = '24:00:00',mem='48g')
   sjob[[i]] <- slurm_apply(align_crispresso, out_tab[[i]], jobname = sprintf("%s_%s_slurm",opt$out,i),
                       nodes = 24, cpus_per_node = 8, slurm_options=sopt1,global_objects = c("gene_sequence","gene_coords"),
                       submit = TRUE,preschedule_cores = F)
