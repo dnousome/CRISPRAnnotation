@@ -1,6 +1,6 @@
 
 
-# Code developed by Alexander Y. Mitrophanov, PhD. Finalized in February 2023.
+# Code developed by Alexander Y. Mitrophanov, PhD. Finalized in June 2023.
 
 # This is the main script that calculates and plots PIFs, and does cross-validation.
 
@@ -17,20 +17,19 @@ library(writexl)
 
 # It is assumed that the project scripts, including this one, will be run from *this* folder ("curr").
 # It is also assumed  that this folder has a subfolder DATA for all the (input and output) data files 
-# and subfolder FIGURES for all
-# code-generated figures.
+# and subfolder FIGURES for all code-generated figures.
 # !!! Users: change directory names and locations as needed.
 curr <- getwd()
 DATA_FOLDER <- paste(curr, "/DATA/", sep = "")
-# !!!!!!!!! It is assumed that the main input-data file has the name "FS_599BRCA2_final.xlsx"
-main_input_data_file <- "FS_599BRCA2_final.xlsx"
+# !!!!!!!!! It is assumed that the main input-data file has the name "FS_NNNSGE_BRCA2.xlsx"
+main_input_data_file <- "FS_NNNSGE_BRCA2.xlsx"
 
 FIG_FOLDER <- paste(curr, "/FIGURES/", sep = "")
-# The script generates figures as PDF files, and they are saved in this FIGURES folder.
+# This script generates figures as PDF files, and they are saved in this FIGURES folder.
 
 
-pathog_thresh <- 0.99 # greater than that
-neutral_thresh <- 0.05 # less than or equal to that
+pathog_thresh <- 0.99 # greater than that is Non-functional
+neutral_thresh <- 0.05 # less than or equal to that is Functional
 threshs <- c(pathog_thresh,neutral_thresh)
 st_link <- "probit" # main type of classifier we are using here
 set.seed(2) # randomization is needed for K fold selection
@@ -42,9 +41,6 @@ boot_PIF_file_DMSO <- "f_noise_PIFs_DMSO.RData"
 boot_PIF_file_Cis <- "f_noise_PIFs_Cis.RData"
 boot_PIF_file_Ola <- "f_noise_PIFs_Ola.RData"
 
-# boot_PIF_file_DMSO_Cis <- "f_noise_PIFs_DMSO_Cis.RData"
-# boot_PIF_file_DMSO_Ola <- "f_noise_PIFs_DMSO_Ola.RData"
-# boot_PIF_file_Cis_Ola <- "f_noise_PIFs_Cis_Ola.RData"
 
 
 # -----------------------------------------------------------------------------
@@ -71,6 +67,7 @@ set_graphics_params <- function() {
 
 LOOCV_glm <- function(datafr_classif,thresh_vec, link_func, reg_form, output_flag, out_flag1) {
   # This function performs leave-one-out cross-validation.
+  # 
   # reg_form is the regression-formula string in terms of variables
   # output_flag is for extra output of misclassified variant names
   # # output_flag1 is for additional text output
@@ -151,9 +148,9 @@ LOOCV_glm <- function(datafr_classif,thresh_vec, link_func, reg_form, output_fla
 fold_CV_dataset_gen <- function(train_set,num_folds) {
   # This function generates num_folds data sets for num_folds-fold CV. These data sets are then used in
   # the function that actually does the CV and returns its accuracy (averaged over the folds).
-  
-  # It is assumed that the variants in data set are either functional or non-functional -- labeled;
-  # train_set <- subset(data_set, classification == 0 | classification == 1)
+  #
+  # It is assumed that the variants in the data set are either functional or non-functional -- i.e., labeled --
+  # obtained using train_set <- subset(data_set, classification == 0 | classification == 1)
   
   N_train <- nrow(train_set)
   rnd_order <- sample(1:N_train)
@@ -310,7 +307,7 @@ acc_on_data_glm_with_CIs <- function(full_dset, thr, link_func, reg_form, boot_P
   # this is needed for plotting PIFs
   PIFs <- predict(fit, full_dset, type = "response")
   data_set <- cbind(full_dset,PIFs)
-  data_set_out <- data_set # this wil be returned by the function as part of its output
+  data_set_out <- data_set # this will be returned by the function as part of its output
   data_set_out <- cbind(data_set_out, boot_out)
   
   data_set <- cbind(data_set, boot_out)
@@ -402,9 +399,9 @@ acc_on_data_glm_with_CIs <- function(full_dset, thr, link_func, reg_form, boot_P
   colnames(data_set_out)[colnames(data_set_out) == "PIFs"] <- "PIF"
   data_set_out[[2]] <- as.character(data_set_out[[2]])
   for (I in 1:nrow(data_set_out)) {
-    if (data_set_out[I,2] == "1") { data_set_out[I,2] <- "Pathogenic" }
-    else if (data_set_out[I,2] == "0") { data_set_out[I,2] <- "Neutral" }
-    else { data_set_out[I,2] <- "VUS"  }
+    if (data_set_out[I,2] == "1") { data_set_out[I,2] <- "Non-functional" }
+    else if (data_set_out[I,2] == "0") { data_set_out[I,2] <- "Functional" }
+    else { data_set_out[I,2] <- "Experimental"  }
   }
   
   out_list[[2]] <- data_set_out
@@ -528,9 +525,8 @@ pl(" ------------------------- Accuracy on the full data set (labeled variants) 
 file_in <- paste(DATA_FOLDER, boot_PIF_file_all, sep = "")
 fig_file <- paste(FIG_FOLDER, "f_PIFs_DMSO_Cis_Ola.pdf", sep = "")
 mm <- acc_on_data_glm_with_CIs(datafr_classif, threshs, st_link, "DMSO + Cis + Ola", file_in, fig_file)
-
 out_DMSO_Cis_Ola <- mm[[2]]
-# out_file <- paste(DATA_FOLDER, "f_PIFs_DMSO_Cis_Ola.xlsx", sep = "")
+# out_file <- paste(DATA_FOLDER, "f_PIFs_DMSO_Cis_Ola_only.xlsx", sep = "")
 # write_xlsx(out, path = out_file)
 
 
@@ -547,7 +543,6 @@ pl(" ------------------------- Accuracy on the full data set (labeled variants) 
 file_in <- paste(DATA_FOLDER, boot_PIF_file_DMSO, sep = "")
 fig_file <- paste(FIG_FOLDER, "f_PIFs_DMSO.pdf", sep = "")
 mm <- acc_on_data_glm_with_CIs(datafr_classif, threshs, st_link, "DMSO", file_in, fig_file)
-
 out_DMSO <- mm[[2]]
 
 
@@ -563,7 +558,6 @@ pl(" ------------------------- Accuracy on the full data set (labeled variants) 
 file_in <- paste(DATA_FOLDER, boot_PIF_file_Cis, sep = "")
 fig_file <- paste(FIG_FOLDER, "f_PIFs_Cis.pdf", sep = "")
 mm <- acc_on_data_glm_with_CIs(datafr_classif, threshs, st_link, "Cis", file_in, fig_file)
-
 out_Cis <- mm[[2]]
 
 
@@ -575,32 +569,7 @@ pl(" ------------------------- Accuracy on full data set (labeled variants) for 
 file_in <- paste(DATA_FOLDER, boot_PIF_file_Ola, sep = "")
 fig_file <- paste(FIG_FOLDER, "f_PIFs_Ola.pdf", sep = "")
 mm <- acc_on_data_glm_with_CIs(datafr_classif, threshs, st_link, "Ola", file_in, fig_file)
-
 out_Ola <- mm[[2]]
-
-
-
-# # ---------------------------------------------------------------------------
-# # --------------------- plotting PIFs for 2-var combos ----------------------
-# # ---------------------------------------------------------------------------
-# 
-# pl(" ")
-# 
-# pl(" ------------------------- Accuracy on the full data set (labeled variants) for 2-var combos --------------------- ")
-# 
-# file_in <- paste(DATA_FOLDER, boot_PIF_file_DMSO_Cis, sep = "")
-# fig_file <- paste(FIG_FOLDER, "f_PIFs_DMSO_Cis.pdf", sep = "")
-# mm <- acc_on_data_glm_with_CIs(datafr_classif, threshs, st_link, "DMSO + Cis", file_in, fig_file)
-# 
-# file_in <- paste(DATA_FOLDER, boot_PIF_file_DMSO_Ola, sep = "")
-# fig_file <- paste(FIG_FOLDER, "f_PIFs_DMSO_Ola.pdf", sep = "")
-# mm <- acc_on_data_glm_with_CIs(datafr_classif, threshs, st_link, "DMSO + Ola", file_in, fig_file)
-# 
-# file_in <- paste(DATA_FOLDER, boot_PIF_file_Cis_Ola, sep = "")
-# fig_file <- paste(FIG_FOLDER, "f_PIFs_Cis_Ola.pdf", sep = "")
-# mm <- acc_on_data_glm_with_CIs(datafr_classif, threshs, st_link, "Cis + Ola", file_in, fig_file)
-
-
 
 
 
@@ -649,52 +618,6 @@ out1 <- K_fold_CV_glm(datafr_classif, K1, threshs, st_link, "DMSO")
 out2 <- K_fold_CV_glm(datafr_classif, K2, threshs, st_link, "DMSO")
 
 
-# # -----------------------------------------------------------------------------
-# # ---------- cross-validation for 2-var combos --------------------------------
-# # -----------------------------------------------------------------------------
-# # both LOOCV and K-fold
-# 
-# pl(" ")
-# pl('----------------------------------------------------------------------------')
-# pl('--------------------- cross-validation for 2-var combos --------------------')
-# pl('----------------------------------------------------------------------------')
-# pl(" ")
-# 
-# form <- "DMSO + Cis"
-# pl(" ")
-# pl(form)
-# pl(" ")
-# out <- LOOCV_glm(datafr_classif,threshs, st_link, form, FALSE, TRUE)
-# # verification
-# out <- K_fold_CV_glm(datafr_classif, K_max, threshs, st_link, form)
-# out1 <- K_fold_CV_glm(datafr_classif, K1, threshs, st_link, form)
-# out2 <- K_fold_CV_glm(datafr_classif, K2, threshs, st_link, form)
-# 
-# pl(" ")
-# 
-# form <- "DMSO + Ola"
-# pl(" ")
-# pl(form)
-# pl(" ")
-# out <- LOOCV_glm(datafr_classif,threshs, st_link, form, FALSE, TRUE)
-# # verification
-# out <- K_fold_CV_glm(datafr_classif, K_max, threshs, st_link, form)
-# out1 <- K_fold_CV_glm(datafr_classif, K1, threshs, st_link, form)
-# out2 <- K_fold_CV_glm(datafr_classif, K2, threshs, st_link, form)
-# 
-# pl(" ")
-# 
-# form <- "Cis + Ola"
-# pl(" ")
-# pl(form)
-# pl(" ")
-# out <- LOOCV_glm(datafr_classif,threshs, st_link, form, FALSE, TRUE)
-# # verification
-# out <- K_fold_CV_glm(datafr_classif, K_max, threshs, st_link, form)
-# out1 <- K_fold_CV_glm(datafr_classif, K1, threshs, st_link, form)
-# out2 <- K_fold_CV_glm(datafr_classif, K2, threshs, st_link, form)
-
-
 
 
 # -----------------------------------------------------------------------------
@@ -715,7 +638,7 @@ for (I in 1:nrow(out_DMSO_Cis_Ola)) {
 }
 
 datafr_main_out <- cbind(datafr_main_out, out_DMSO_Cis_Ola[6:8], out_DMSO[6:8], out_Cis[6:8], out_Ola[6:8], our_class)
-out_file <- paste(DATA_FOLDER, "FS_599BRCA2_final_withPIFs.xlsx", sep = "")
+out_file <- paste(DATA_FOLDER, "FS_NNNSGE_BRCA2_withPIFs.xlsx", sep = "")
 
 
 # saving project data
