@@ -1,6 +1,6 @@
 
 
-# This code was written by Alexander Y. Mitrophanov, PhD. Finalized in February 2023.
+# This code was written by Alexander Y. Mitrophanov, PhD. Finalized in June 2023.
 
 # This script generates confidence interval (CI) data.
 
@@ -81,7 +81,7 @@ PIF_noise <- function(data, num_reps, link_func, reg_form) {
 
 
 
-quant_intervals <- function(boot_output) { # This is, in fact, "noise output" here, from PIF_noise.
+quant_intervals <- function(boot_output) { # The input variable is, in fact, "noise output" here, from PIF_noise.
   # This function calculates and returns CI information.
   
   # these upper and lower numbers correspond to 95% CI
@@ -126,7 +126,10 @@ quant_intervals <- function(boot_output) { # This is, in fact, "noise output" he
 # ------------- data loading and processing -----------------------------------
 # -----------------------------------------------------------------------------
 
-file_in <- paste(DATA_FOLDER, "FS_599BRCA2_final.xlsx", sep = "")
+file_in <- paste(DATA_FOLDER, "FS_NNNSGE_BRCA2.xlsx", sep = "")
+# this is the input data file
+
+
 datafr <- read_excel(file_in)
 
 datafr_rep1 <- datafr[c(1,2,3,5,7)]
@@ -210,27 +213,6 @@ file_out <- paste(DATA_FOLDER, noise_PIF_out_file, sep = "")
 save(boot_out, file = file_out)
 
 
-# # -------------------- additional combinations (2 variables) ---------------------------
-# 
-# reg_formula <- "DMSO + Cis"
-# noise_PIF_out_file <- "f_noise_PIFs_DMSO_Cis.RData"
-# noise_out <- PIF_noise(datafr_classif, num_reps, st_link, reg_formula)
-# boot_out <- quant_intervals(noise_out)
-# file_out <- paste(DATA_FOLDER, noise_PIF_out_file, sep = "")
-# save(boot_out, file = file_out)
-# 
-# reg_formula <- "DMSO + Ola"
-# noise_PIF_out_file <- "f_noise_PIFs_DMSO_Ola.RData"
-# noise_out <- PIF_noise(datafr_classif, num_reps, st_link, reg_formula)
-# boot_out <- quant_intervals(noise_out)
-# file_out <- paste(DATA_FOLDER, noise_PIF_out_file, sep = "")
-# save(boot_out, file = file_out)
-# 
-# reg_formula <- "Cis + Ola"
-# noise_PIF_out_file <- "f_noise_PIFs_Cis_Ola.RData"
-# noise_out <- PIF_noise(datafr_classif, num_reps, st_link, reg_formula)
-# boot_out <- quant_intervals(noise_out)
-# file_out <- paste(DATA_FOLDER, noise_PIF_out_file, sep = "")
-# save(boot_out, file = file_out)
+
 
 
